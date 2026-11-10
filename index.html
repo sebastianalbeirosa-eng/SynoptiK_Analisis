@@ -23906,24 +23906,35 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
                 marginTop: '12px',
                 border: '1px solid var(--borde-suave)',
                 borderRadius: 'var(--redondeo-pequeno)',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                maxWidth: '90%'
             }
         }, [
             crearElemento('summary', {
                 estilo: {
-                    padding: '12px',
+                    padding: '10px 12px',
                     cursor: 'pointer',
                     background: 'var(--fondo-hundido)',
                     fontWeight: '500',
                     fontSize: 'var(--tamano-pequeno)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    gap: '12px'
                 }
             }, [
-                crearElemento('span', { texto: `${item.etiqueta.substring(0, 40)}...` }),
+                crearElemento('span', { 
+                    estilo: { flex: '1', minWidth: '0' },
+                    texto: `${item.etiqueta.substring(0, 35)}...` 
+                }),
                 crearElemento('span', {
-                    estilo: { color: 'var(--acento)', fontWeight: '600' },
+                    estilo: { 
+                        color: 'var(--acento)', 
+                        fontWeight: '600',
+                        flexShrink: '0',
+                        minWidth: '60px',
+                        textAlign: 'right'
+                    },
                     texto: `${item.observaciones.length} obs`
                 })
             ]),
@@ -23933,7 +23944,8 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
                         listStyle: 'disc',
                         paddingLeft: '20px',
                         fontSize: 'var(--tamano-pequeno)',
-                        lineHeight: '1.6'
+                        lineHeight: '1.6',
+                        margin: '0'
                     }
                 }, obsUnicas.map(obs =>
                     crearElemento('li', {
@@ -23954,24 +23966,35 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
                 marginTop: '12px',
                 border: '1px solid var(--borde-suave)',
                 borderRadius: 'var(--redondeo-pequeno)',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                maxWidth: '90%'
             }
         }, [
             crearElemento('summary', {
                 estilo: {
-                    padding: '12px',
+                    padding: '10px 12px',
                     cursor: 'pointer',
                     background: 'var(--fondo-hundido)',
                     fontWeight: '500',
                     fontSize: 'var(--tamano-pequeno)',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    gap: '12px'
                 }
             }, [
-                crearElemento('span', { texto: `${item.etiqueta.substring(0, 40)}...` }),
+                crearElemento('span', { 
+                    estilo: { flex: '1', minWidth: '0' },
+                    texto: `${item.etiqueta.substring(0, 35)}...` 
+                }),
                 crearElemento('span', {
-                    estilo: { color: 'var(--acento)', fontWeight: '600' },
+                    estilo: { 
+                        color: 'var(--acento)', 
+                        fontWeight: '600',
+                        flexShrink: '0',
+                        minWidth: '60px',
+                        textAlign: 'right'
+                    },
                     texto: `${item.observaciones.length} obs`
                 })
             ]),
@@ -23981,7 +24004,8 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
                         listStyle: 'disc',
                         paddingLeft: '20px',
                         fontSize: 'var(--tamano-pequeno)',
-                        lineHeight: '1.6'
+                        lineHeight: '1.6',
+                        margin: '0'
                     }
                 }, obsUnicas.map(obs =>
                     crearElemento('li', {
@@ -24665,8 +24689,8 @@ function crearPanelFiltrosJerarquicosTiemposMuertos(datosFiltrados, estado) {
 }
 
 /**
- * Panel de Serie Temporal (Gráfico de Líneas) - Tiempos Muertos
- * Muestra todos los días del mes con etiquetas en los picos
+ * Panel de Series Temporales (Gráficos de Líneas) - Tiempos Muertos
+ * DOS gráficos: uno para PRENSAS y otro para LÍNEA ESMALTE
  * @param {Array} datosFiltrados - Datos filtrados
  * @param {object} estado - Estado de la aplicación
  * @returns {HTMLElement} Panel
@@ -24680,185 +24704,170 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
         ]);
     }
     
-    // Construir la serie temporal con granularidad DIARIA usando DURACIÓN
-    // Agrupar manualmente por fecha y sumar duraciones
-    const porFecha = {};
-    datosFiltrados.forEach(d => {
-        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
-        if (!fechaStr) return;
-        
-        // Extraer día
-        let dia;
-        if (typeof fechaStr === 'string') {
-            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-            if (match) {
-                dia = parseInt(match[3], 10); // Día del mes
-            }
-        } else if (fechaStr instanceof Date) {
-            dia = fechaStr.getDate();
-        }
-        
-        if (!dia) return;
-        
-        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
-        
-        if (!porFecha[dia]) {
-            porFecha[dia] = 0;
-        }
-        porFecha[dia] += duracion;
+    // Separar datos por tipo de máquina
+    const datosPrensas = datosFiltrados.filter(d => {
+        const maq = (d['Máquina'] || d.Maquina || d.maquina || '').toUpperCase();
+        return maq.includes('PRENSA');
     });
     
-    // Convertir a array de puntos
-    const puntos = Object.entries(porFecha)
-        .map(([dia, minutos]) => ({
-            fecha: parseInt(dia, 10),
-            valor: minutos
-        }))
-        .sort((a, b) => a.fecha - b.fecha);
+    const datosLineaEsmalte = datosFiltrados.filter(d => {
+        const maq = (d['Máquina'] || d.Maquina || d.maquina || '').toUpperCase();
+        return maq.includes('LINEA ESMALTE') || maq.includes('LÍNEA ESMALTE');
+    });
     
-    if (puntos.length < 2) {
+    // Función auxiliar para crear gráfico por máquina
+    const crearGraficoPorMaquina = (datos, nombreMaquina) => {
+        if (!datos || datos.length === 0) {
+            return null;
+        }
+        
+        // Agrupar por día
+        const porDia = {};
+        const motivosPorDia = {};
+        
+        datos.forEach(d => {
+            const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
+            if (!fechaStr) return;
+            
+            let dia;
+            if (typeof fechaStr === 'string') {
+                const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+                if (match) dia = parseInt(match[3], 10);
+            } else if (fechaStr instanceof Date) {
+                dia = fechaStr.getDate();
+            }
+            
+            if (!dia) return;
+            
+            const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+            const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
+            
+            if (!porDia[dia]) {
+                porDia[dia] = 0;
+                motivosPorDia[dia] = {};
+            }
+            porDia[dia] += duracion;
+            
+            if (!motivosPorDia[dia][motivo]) {
+                motivosPorDia[dia][motivo] = 0;
+            }
+            motivosPorDia[dia][motivo] += duracion;
+        });
+        
+        const puntos = Object.entries(porDia)
+            .map(([dia, minutos]) => ({
+                fecha: parseInt(dia),
+                valor: minutos
+            }))
+            .sort((a, b) => a.fecha - b.fecha);
+        
+        if (puntos.length < 2) return null;
+        
+        // Estadísticas
+        const diasUnicos = puntos.length;
+        const totalMinutos = puntos.reduce((sum, p) => sum + p.valor, 0);
+        const promedio = (totalMinutos / puntos.length).toFixed(0);
+        
+        // TOP 5 días
+        const topDias = [...puntos].sort((a, b) => b.valor - a.valor).slice(0, 5);
+        
+        // Gráfico de línea
+        const datosLinea = puntos.map(punto => ({
+            clave: `Día ${punto.fecha}`,
+            valor: punto.valor
+        }));
+        
+        const graficoLinea = dibujarLinea(datosLinea, {
+            alto: 260,
+            descripcion: `Evolución de ${nombreMaquina} por día del mes`,
+            mostrarArea: true,
+            formatearValor: (val) => `${Math.round(val)} min`
+        });
+        
+        // Tabla TOP 5 días
+        const tablaDias = crearElemento('table', { clase: 'tabla-base', estilo: { marginTop: '16px' } }, [
+            crearElemento('thead', {}, [
+                crearElemento('tr', {}, [
+                    crearElemento('th', { estilo: { width: '100px' } }, 'Día'),
+                    crearElemento('th', { estilo: { width: '120px', textAlign: 'right' } }, 'Minutos'),
+                    crearElemento('th', {}, 'Motivo Principal')
+                ])
+            ]),
+            crearElemento('tbody', {}, topDias.map((pico, idx) => {
+                const dia = pico.fecha;
+                
+                // Obtener motivo principal del día
+                let motivoPrincipal = '—';
+                if (motivosPorDia[dia]) {
+                    const motivosDelDia = Object.entries(motivosPorDia[dia])
+                        .sort((a, b) => b[1] - a[1]);
+                    if (motivosDelDia.length > 0) {
+                        const motivoCompleto = motivosDelDia[0][0];
+                        const match = motivoCompleto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+                        if (match) {
+                            motivoPrincipal = `${match[1]}: ${match[2]}`;
+                        } else {
+                            motivoPrincipal = motivoCompleto;
+                        }
+                    }
+                }
+                
+                return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
+                    crearElemento('td', { clase: 'celda-lista', estilo: { fontWeight: '600' } }, `Día ${dia}`),
+                    crearElemento('td', { 
+                        clase: 'celda-numero',
+                        estilo: { color: 'var(--acento)', fontWeight: '600' },
+                        texto: `${Math.round(pico.valor)} min`
+                    }),
+                    crearElemento('td', { 
+                        clase: 'celda-lista',
+                        estilo: {
+                            minWidth: '400px',
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word',
+                            lineHeight: '1.4'
+                        }
+                    }, motivoPrincipal)
+                ]);
+            }))
+        ]);
+        
+        return crearPanel({
+            titulo: `Evolución por Día: ${nombreMaquina}`,
+            subtitulo: `${diasUnicos} días • ${Math.round(totalMinutos)} min totales • Promedio ${promedio} min/día`,
+            icono: 'historial',
+            cuerpo: [
+                graficoLinea,
+                crearElemento('h5', {
+                    estilo: {
+                        fontSize: 'var(--tamano-pequeno)',
+                        fontWeight: '600',
+                        marginTop: '16px',
+                        marginBottom: '8px',
+                        color: 'var(--texto-fuerte)'
+                    },
+                    texto: 'Top 5 días con más parada'
+                }),
+                tablaDias
+            ]
+        });
+    };
+    
+    // Crear ambos gráficos
+    const graficoPrensas = crearGraficoPorMaquina(datosPrensas, 'Prensas');
+    const graficoLineaEsmalte = crearGraficoPorMaquina(datosLineaEsmalte, 'Línea Esmalte');
+    
+    const graficos = [graficoPrensas, graficoLineaEsmalte].filter(Boolean);
+    
+    if (graficos.length === 0) {
         return crearElemento('div', { clase: 'tarjeta-panel vacio' }, [
             crearElemento('div', { clase: 'icono-boton' }, crearIcono('grafico')),
             crearElemento('h3', {}, 'Sin datos suficientes'),
-            crearElemento('p', { estilo: { color: 'var(--texto-suave)' } }, 'Se necesitan al menos 2 días de datos para el gráfico de evolución.')
+            crearElemento('p', { estilo: { color: 'var(--texto-suave)' } }, 'No hay datos de Prensas ni Línea Esmalte.')
         ]);
     }
     
-    // Calcular estadísticas
-    const diasUnicos = new Set(puntos.map(p => p.fecha)).size;
-    const totalMinutos = puntos.reduce((sum, p) => sum + (p.valor || 0), 0);
-    const promedio = puntos.length > 0 ? (totalMinutos / puntos.length).toFixed(0) : '0';
-    
-    // Encontrar los picos (días con más minutos) - top 5
-    const topDias = [...puntos].sort((a, b) => b.valor - a.valor).slice(0, 5);
-    
-    // Calcular motivo principal por día para los top 5
-    const motivosPorDia = {};
-    datosFiltrados.forEach(d => {
-        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
-        if (!fechaStr) return;
-        
-        let dia;
-        if (typeof fechaStr === 'string') {
-            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
-            if (match) dia = parseInt(match[3], 10);
-        } else if (fechaStr instanceof Date) {
-            dia = fechaStr.getDate();
-        }
-        
-        if (!dia) return;
-        
-        const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
-        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
-        
-        if (!motivosPorDia[dia]) {
-            motivosPorDia[dia] = {};
-        }
-        
-        if (!motivosPorDia[dia][motivo]) {
-            motivosPorDia[dia][motivo] = 0;
-        }
-        motivosPorDia[dia][motivo] += duracion;
-    });
-    
-    const diasConPicos = topDias.map((pico, index) => ({
-        indice: index,
-        titulo: `Día ${pico.fecha}`,
-        detalle: `${Math.round(pico.valor)} min`
-    }));
-    
-    // Gráfico de líneas con etiquetas en los picos
-    const datosLinea = puntos.map(punto => ({
-        clave: `Día ${punto.fecha}`,
-        valor: punto.valor
-    }));
-    
-    const graficoLinea = dibujarLinea(datosLinea, {
-        alto: 260,
-        descripcion: 'Evolución de los minutos de parada por día del mes',
-        mostrarArea: true,
-        formatearValor: (val) => `${Math.round(val)} min`,
-        rotuloDestacado: diasConPicos.length > 0 ? {
-            indice: puntos.findIndex(p => p.fecha === diasConPicos[0].titulo.replace('Día ', '')),
-            titulo: diasConPicos[0].titulo,
-            detalle: diasConPicos[0].detalle
-        } : null
-    });
-    
-    return crearElemento('div', { clase: 'tarjeta-panel' }, [
-        crearElemento('div', { clase: 'cabecera-panel' }, [
-            crearElemento('div', { clase: 'cabecera-panel-icono' }, crearIcono('historial')),
-            crearElemento('div', { clase: 'cabecera-panel-contenido' }, [
-                crearElemento('h3', {}, 'Evolución por Día del Mes'),
-                crearElemento('p', { clase: 'subtitulo' }, `${diasUnicos} días con datos • ${Math.round(totalMinutos)} min totales • Promedio ${promedio} min/día`)
-            ])
-        ]),
-        crearElemento('div', { clase: 'cuerpo-panel' }, [
-            graficoLinea
-        ]),
-        crearElemento('div', { clase: 'meta-panel' }, [
-            crearElemento('div', { clase: 'meta-item' }, [
-                crearElemento('span', { clase: 'meta-label' }, 'Días únicos'),
-                crearElemento('span', { clase: 'meta-valor', texto: diasUnicos })
-            ]),
-            crearElemento('div', { clase: 'meta-item' }, [
-                crearElemento('span', { clase: 'meta-label' }, 'Total de min. parada'),
-                crearElemento('span', { clase: 'meta-valor', texto: `${Math.round(totalMinutos)} min` })
-            ]),
-            crearElemento('div', { clase: 'meta-item' }, [
-                crearElemento('span', { clase: 'meta-label' }, 'Promedio'),
-                crearElemento('span', { clase: 'meta-valor', texto: `${promedio} min/día` })
-            ])
-        ]),
-        // Top 5 días con más parada
-        crearElemento('div', { clase: 'tabla-picos' }, [
-            crearElemento('h4', {}, 'Top 5 días con más parada'),
-            crearElemento('table', { clase: 'tabla-base' }, [
-                crearElemento('thead', {}, [
-                    crearElemento('tr', {}, [
-                        crearElemento('th', {}, 'Día'),
-                        crearElemento('th', {}, 'Minutos'),
-                        crearElemento('th', {}, 'Motivo principal')
-                    ])
-                ]),
-                crearElemento('tbody', {}, topDias.map((pico, idx) => {
-                    const dia = pico.fecha;
-                    
-                    // Obtener el motivo principal de ese día específico
-                    let motivoPrincipalDia = '—';
-                    if (motivosPorDia[dia]) {
-                        const motivosDelDia = Object.entries(motivosPorDia[dia])
-                            .sort((a, b) => b[1] - a[1]);
-                        if (motivosDelDia.length > 0) {
-                            const motivoCompleto = motivosDelDia[0][0];
-                            // Extraer código y descripción SIN RECORTAR
-                            const match = motivoCompleto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
-                            if (match) {
-                                motivoPrincipalDia = `${match[1]}: ${match[2]}`;
-                            } else {
-                                motivoPrincipalDia = motivoCompleto;
-                            }
-                        }
-                    }
-                    
-                    return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
-                        crearElemento('td', { clase: 'celda-lista', estilo: { minWidth: '80px' } }, `Día ${dia}`),
-                        crearElemento('td', { clase: 'celda-numero', estilo: { minWidth: '100px' }, texto: Math.round(pico.valor) }),
-                        crearElemento('td', { 
-                            clase: 'celda-lista', 
-                            estilo: { 
-                                minWidth: '400px',
-                                maxWidth: '600px',
-                                whiteSpace: 'normal',
-                                wordWrap: 'break-word',
-                                lineHeight: '1.4'
-                            } 
-                        }, motivoPrincipalDia)
-                    ]);
-                }))
-            ])
-        ])
-    ]);
+    return crearElemento('div', { clase: 'layout-rejilla-2' }, graficos);
 }
 /**
  * js/vistas/vistaTablero.js
