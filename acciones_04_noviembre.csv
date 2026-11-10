@@ -1,8 +1,0 @@
-Turno,Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
-Mañana,07:30,Falla de sensor de temperatura,Reemplazo de sensor,Juan Pérez,Cerrado,Nuevo sensor instalado
-Mañana,10:45,Mantenimiento preventivo,Limpieza de filtros,María García,Cerrado,Filtros limpios
-Mañana,13:00,Falla de energía,Revisión de conexión,Carlos López,Cerrado,Conexión estable
-Tarde,17:30,Falla de horno industrial,Cambio de resistencia,Pedro Ramírez,Cerrado,Horno operativo
-Tarde,20:00,Obstrucción en línea,Limpieza de cinta,Ana Martínez,Cerrado,Línea limpia
-Noche,23:45,Falla de sensor de temperatura,Limpieza y ajuste,Luis Fernández,Cerrado,Sensor OK
-Noche,02:00,Vacío de horno por parada,Revisión de calentamiento,Carmen Ruiz,Pendiente,Esperando repuesto

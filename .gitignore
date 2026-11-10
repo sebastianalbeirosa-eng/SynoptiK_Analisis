@@ -1,2 +1,16 @@
+# Archivos de datos de prueba
+*.csv
 *.xlsx
 *.xls
+
+# Archivos de prueba y temporales
+test-*.html
+diagnostico-*.js
+implementacion-*.md
+
+# Node modules (si se agregan después)
+node_modules/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
