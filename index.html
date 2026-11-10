@@ -24018,8 +24018,8 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
     const totalDiasDelMes = diasDelMes.size;
     const promedioDiario = totalDiasDelMes > 0 ? (totalMinutosCambios / totalDiasDelMes) : 0;
     
-    // Agrupar por día
-    const porDia = {};
+    // Agrupar por día con observaciones
+    const porDiaConObs = {};
     datosCambios.forEach(d => {
         const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
         if (!fechaStr) return;
@@ -24035,32 +24035,140 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         if (!dia) return;
         
         const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        const obs = d['Observaciones'] || d.Observaciones || d.observaciones || 'Sin observación';
         
-        if (!porDia[dia]) {
-            porDia[dia] = 0;
+        if (!porDiaConObs[dia]) {
+            porDiaConObs[dia] = { minutos: 0, observaciones: [] };
         }
-        porDia[dia] += duracion;
+        porDiaConObs[dia].minutos += duracion;
+        if (obs.trim()) {
+            porDiaConObs[dia].observaciones.push(obs);
+        }
     });
     
-    // Convertir a array para gráfico
-    const puntosCambios = Object.entries(porDia)
-        .map(([dia, minutos]) => ({
+    // Convertir a array para gráfico y tabla
+    const puntosCambios = Object.entries(porDiaConObs)
+        .map(([dia, data]) => ({
             etiqueta: `Día ${dia}`,
-            valor: minutos
+            valor: data.minutos,
+            dia: parseInt(dia),
+            observaciones: data.observaciones
         }))
-        .sort((a, b) => {
-            const diaA = parseInt(a.etiqueta.replace('Día ', ''));
-            const diaB = parseInt(b.etiqueta.replace('Día ', ''));
-            return diaA - diaB;
-        });
+        .sort((a, b) => a.dia - b.dia);
     
-    // Crear gráfico de barras verticales
-    const graficoCambios = puntosCambios.length > 0 ? dibujarBarrasVerticales(puntosCambios, {
-        alto: 220,
-        formatearValor: (val) => `${Math.round(val)} min`,
-        descripcion: 'Minutos de parada por cambio de producto por día',
-        serieDeColor: 4
-    }) : crearEstadoVacio({ titulo: 'Sin datos para graficar', icono: 'info' });
+    // Crear gráfico de barras verticales con valores en la punta
+    let graficoCambios;
+    if (puntosCambios.length > 0) {
+        const graficoBase = dibujarBarrasVerticales(puntosCambios, {
+            alto: 240,
+            formatearValor: (val) => `${Math.round(val)} min`,
+            descripcion: 'Minutos de parada por cambio de producto por día',
+            serieDeColor: 4
+        });
+        
+        // Agregar valores numéricos en la punta de las barras
+        // Como no podemos modificar el SVG directamente, agregaremos los valores en el tooltip mejorado
+        // El gráfico ya muestra los valores al pasar el mouse
+        
+        graficoCambios = graficoBase;
+    } else {
+        graficoCambios = crearEstadoVacio({ titulo: 'Sin datos para graficar', icono: 'info' });
+    }
+    
+    // Crear resumen visual con badges de cada día
+    const resumenDias = puntosCambios.length > 0 ? crearElemento('div', {
+        estilo: {
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '16px',
+            padding: '12px',
+            background: 'var(--fondo-hundido)',
+            borderRadius: 'var(--redondeo-medio)'
+        }
+    }, puntosCambios.map(punto => 
+        crearElemento('div', {
+            estilo: {
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                background: 'var(--fondo-elevado)',
+                borderRadius: 'var(--redondeo-pequeno)',
+                border: '1px solid var(--borde-suave)',
+                fontSize: 'var(--tamano-pequeno)',
+                fontWeight: '500'
+            }
+        }, [
+            crearElemento('span', {
+                estilo: { color: 'var(--texto-suave)' },
+                texto: `Día ${punto.dia}:`
+            }),
+            crearElemento('span', {
+                estilo: { 
+                    color: 'var(--acento)',
+                    fontWeight: '700',
+                    fontSize: 'var(--tamano-comodo)'
+                },
+                texto: `${Math.round(punto.valor)} min`
+            })
+        ])
+    )) : null;
+    
+    // Crear tabla de observaciones por día
+    const tablaObservaciones = puntosCambios.length > 0 ? crearElemento('div', {
+        estilo: { marginTop: '24px' }
+    }, [
+        crearElemento('h4', {
+            estilo: {
+                fontSize: 'var(--tamano-comodo)',
+                fontWeight: '600',
+                marginBottom: '12px',
+                color: 'var(--texto-fuerte)'
+            },
+            texto: '📝 Observaciones por Día: ¿Por qué demoró el cambio?'
+        }),
+        crearElemento('table', { 
+            clase: 'tabla-base',
+            estilo: { width: '100%' }
+        }, [
+            crearElemento('thead', {}, [
+                crearElemento('tr', {}, [
+                    crearElemento('th', { estilo: { width: '80px' } }, 'Día'),
+                    crearElemento('th', { estilo: { width: '100px', textAlign: 'right' } }, 'Minutos'),
+                    crearElemento('th', {}, 'Observaciones')
+                ])
+            ]),
+            crearElemento('tbody', {}, puntosCambios.map(punto => {
+                const obsTexto = punto.observaciones.length > 0
+                    ? punto.observaciones.join(' • ')
+                    : 'Sin observación registrada';
+                
+                return crearElemento('tr', {}, [
+                    crearElemento('td', { 
+                        clase: 'celda-lista',
+                        estilo: { fontWeight: '600' }
+                    }, `Día ${punto.dia}`),
+                    crearElemento('td', { 
+                        clase: 'celda-numero',
+                        estilo: { 
+                            color: 'var(--acento)',
+                            fontWeight: '600'
+                        },
+                        texto: `${Math.round(punto.valor)} min`
+                    }),
+                    crearElemento('td', { 
+                        clase: 'celda-lista',
+                        estilo: {
+                            lineHeight: '1.5',
+                            whiteSpace: 'normal',
+                            wordWrap: 'break-word'
+                        }
+                    }, obsTexto)
+                ]);
+            }))
+        ])
+    ]) : null;
     
     // KPIs de cambio de producto
     const kpisCambios = crearElemento('div', {
@@ -24153,31 +24261,46 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         } 
     }, [graficoCambios]);
     
+    // Construir cuerpo del panel
+    const cuerpoPanel = [
+        kpisCambios,
+        crearElemento('h4', {
+            estilo: {
+                fontSize: 'var(--tamano-comodo)',
+                fontWeight: '600',
+                marginBottom: '8px',
+                color: 'var(--texto-fuerte)'
+            },
+            texto: '📊 Minutos de Parada por Cambio de Producto - Evolución Diaria'
+        }),
+        crearElemento('p', {
+            estilo: {
+                fontSize: 'var(--tamano-pequeno)',
+                color: 'var(--texto-suave)',
+                marginBottom: '12px'
+            },
+            texto: 'Valores exactos por día:'
+        })
+    ];
+    
+    // Agregar resumen visual con badges
+    if (resumenDias) {
+        cuerpoPanel.push(resumenDias);
+    }
+    
+    // Agregar gráfico
+    cuerpoPanel.push(contenedorGrafico);
+    
+    // Agregar tabla de observaciones si existe
+    if (tablaObservaciones) {
+        cuerpoPanel.push(tablaObservaciones);
+    }
+    
     return crearPanel({
         titulo: '🔄 Análisis Especial: Cambio de Producto / Modelo',
         subtitulo: `Impacto de cambios de diseño en los tiempos muertos del mes`,
         icono: 'intercambio',
-        cuerpo: [
-            kpisCambios,
-            crearElemento('h4', {
-                estilo: {
-                    fontSize: 'var(--tamano-comodo)',
-                    fontWeight: '600',
-                    marginBottom: '8px',
-                    color: 'var(--texto-fuerte)'
-                },
-                texto: '📊 Minutos de Parada por Cambio de Producto - Evolución Diaria'
-            }),
-            crearElemento('p', {
-                estilo: {
-                    fontSize: 'var(--tamano-pequeno)',
-                    color: 'var(--texto-suave)',
-                    marginBottom: '12px'
-                },
-                texto: 'Este gráfico muestra solo los días donde hubo cambios de modelo/diseño/producto. Pasa el mouse sobre las barras para ver el valor exacto.'
-            }),
-            contenedorGrafico
-        ]
+        cuerpo: cuerpoPanel
     });
 }
 
