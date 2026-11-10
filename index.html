@@ -24784,34 +24784,106 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
             formatearValor: (val) => `${Math.round(val)} min`
         });
         
-        // Tabla TOP 5 días
+        // Tabla TOP 5 días CON DESGLOSE DE MOTIVOS
         const tablaDias = crearElemento('table', { clase: 'tabla-base', estilo: { marginTop: '16px' } }, [
             crearElemento('thead', {}, [
                 crearElemento('tr', {}, [
                     crearElemento('th', { estilo: { width: '100px' } }, 'Día'),
-                    crearElemento('th', { estilo: { width: '120px', textAlign: 'right' } }, 'Minutos'),
-                    crearElemento('th', {}, 'Motivo Principal')
+                    crearElemento('th', { estilo: { width: '120px', textAlign: 'right' } }, 'Minutos Totales'),
+                    crearElemento('th', {}, 'Desglose de Motivos')
                 ])
             ]),
             crearElemento('tbody', {}, topDias.map((pico, idx) => {
                 const dia = pico.fecha;
                 
-                // Obtener motivo principal del día
-                let motivoPrincipal = '—';
+                // Obtener TODOS los motivos del día ordenados
+                let detalleMotivos = '—';
                 if (motivosPorDia[dia]) {
                     const motivosDelDia = Object.entries(motivosPorDia[dia])
                         .sort((a, b) => b[1] - a[1]);
-                    if (motivosDelDia.length > 0) {
-                        const motivoCompleto = motivosDelDia[0][0];
-                        const match = motivoCompleto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
-                        if (match) {
-                            motivoPrincipal = `${match[1]}: ${match[2]}`;
-                        } else {
-                            motivoPrincipal = motivoCompleto;
+                    
+                    // Crear lista expandible
+                    const listaMotivos = motivosDelDia.map(([motivo, mins]) => {
+                        const match = motivo.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+                        const textoMotivo = match ? `${match[1]}: ${match[2]}` : motivo;
+                        return `• ${textoMotivo} (${Math.round(mins)} min)`;
+                    }).join('\n');
+                    
+                    // Crear acordeón para el desglose
+                    const acordeon = crearElemento('details', {
+                        estilo: {
+                            marginTop: '4px',
+                            padding: '8px',
+                            background: 'var(--fondo-hundido)',
+                            borderRadius: 'var(--redondeo-pequeno)',
+                            border: '1px solid var(--borde-suave)'
                         }
-                    }
+                    }, [
+                        crearElemento('summary', {
+                            estilo: {
+                                cursor: 'pointer',
+                                fontWeight: '600',
+                                fontSize: 'var(--tamano-pequeno)',
+                                color: 'var(--acento)',
+                                padding: '4px'
+                            }
+                        }, [
+                            crearElemento('span', { texto: `👁️ Ver ${motivosDelDia.length} motivo${motivosDelDia.length > 1 ? 's' : ''} del día` })
+                        ]),
+                        crearElemento('div', {
+                            estilo: {
+                                marginTop: '8px',
+                                paddingLeft: '8px',
+                                fontSize: 'var(--tamano-pequeno)',
+                                lineHeight: '1.8'
+                            }
+                        }, motivosDelDia.map(([motivo, mins]) => {
+                            const match = motivo.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+                            const textoMotivo = match ? `${match[1]}: ${match[2]}` : motivo;
+                            
+                            return crearElemento('div', {
+                                estilo: {
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    padding: '4px 0',
+                                    borderBottom: '1px solid var(--borde-suave)'
+                                }
+                            }, [
+                                crearElemento('span', {
+                                    estilo: { flex: '1', paddingRight: '12px' },
+                                    texto: textoMotivo
+                                }),
+                                crearElemento('span', {
+                                    estilo: {
+                                        fontWeight: '600',
+                                        color: 'var(--acento)',
+                                        minWidth: '70px',
+                                        textAlign: 'right'
+                                    },
+                                    texto: `${Math.round(mins)} min`
+                                })
+                            ]);
+                        }))
+                    ]);
+                    
+                    return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
+                        crearElemento('td', { clase: 'celda-lista', estilo: { fontWeight: '600', verticalAlign: 'top' } }, `Día ${dia}`),
+                        crearElemento('td', { 
+                            clase: 'celda-numero',
+                            estilo: { color: 'var(--acento)', fontWeight: '700', fontSize: 'var(--tamano-comodo)', verticalAlign: 'top' },
+                            texto: `${Math.round(pico.valor)} min`
+                        }),
+                        crearElemento('td', { 
+                            clase: 'celda-lista',
+                            estilo: {
+                                minWidth: '400px',
+                                verticalAlign: 'top'
+                            }
+                        }, [acordeon])
+                    ]);
                 }
                 
+                // Si no hay motivos
                 return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
                     crearElemento('td', { clase: 'celda-lista', estilo: { fontWeight: '600' } }, `Día ${dia}`),
                     crearElemento('td', { 
@@ -24819,15 +24891,7 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                         estilo: { color: 'var(--acento)', fontWeight: '600' },
                         texto: `${Math.round(pico.valor)} min`
                     }),
-                    crearElemento('td', { 
-                        clase: 'celda-lista',
-                        estilo: {
-                            minWidth: '400px',
-                            whiteSpace: 'normal',
-                            wordWrap: 'break-word',
-                            lineHeight: '1.4'
-                        }
-                    }, motivoPrincipal)
+                    crearElemento('td', { clase: 'celda-lista' }, '—')
                 ]);
             }))
         ]);
