@@ -24022,21 +24022,21 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
     // Convertir a array para gráfico
     const puntosCambios = Object.entries(porDia)
         .map(([dia, minutos]) => ({
-            clave: `Día ${dia}`,
+            etiqueta: `Día ${dia}`,
             valor: minutos
         }))
         .sort((a, b) => {
-            const diaA = parseInt(a.clave.replace('Día ', ''));
-            const diaB = parseInt(b.clave.replace('Día ', ''));
+            const diaA = parseInt(a.etiqueta.replace('Día ', ''));
+            const diaB = parseInt(b.etiqueta.replace('Día ', ''));
             return diaA - diaB;
         });
     
-    // Crear gráfico de barras
-    const graficoCambios = puntosCambios.length > 0 ? dibujarBarras(puntosCambios, {
+    // Crear gráfico de barras verticales
+    const graficoCambios = puntosCambios.length > 0 ? dibujarBarrasVerticales(puntosCambios, {
         alto: 220,
-        mostrarValores: false,
         formatearValor: (val) => `${Math.round(val)} min`,
-        colorBase: '#8b5cf6'
+        descripcion: 'Minutos de parada por cambio de producto por día',
+        serieDeColor: 4
     }) : crearEstadoVacio({ titulo: 'Sin datos para graficar', icono: 'info' });
     
     // KPIs de cambio de producto
