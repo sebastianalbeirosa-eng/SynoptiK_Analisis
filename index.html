@@ -23800,17 +23800,22 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         return maq.includes('HORNO');
     });
     
-    // TOP 5 MOTIVOS DE PARADAS (Prensas y Línea Esmalte)
+    // TOP 5 MOTIVOS DE PARADAS (Prensas y Línea Esmalte) CON OBSERVACIONES
     const motivosParadas = {};
     datosParadas.forEach(d => {
         const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
         const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        const obs = d['Observaciones'] || d.Observaciones || d.observaciones || '';
         
         if (!motivosParadas[motivo]) {
-            motivosParadas[motivo] = { minutos: 0, eventos: 0 };
+            motivosParadas[motivo] = { minutos: 0, eventos: 0, observaciones: [] };
         }
         motivosParadas[motivo].minutos += duracion;
         motivosParadas[motivo].eventos += 1;
+        
+        if (obs.trim()) {
+            motivosParadas[motivo].observaciones.push(obs);
+        }
     });
     
     const top5Paradas = Object.entries(motivosParadas)
@@ -23825,24 +23830,31 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
             
             return { 
                 etiqueta: etiqueta,
+                motivoOriginal: mot,
                 valor: data.minutos,
-                eventos: data.eventos
+                eventos: data.eventos,
+                observaciones: data.observaciones
             };
         })
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
     
-    // TOP 5 MOTIVOS DE VACÍOS (Horno)
+    // TOP 5 MOTIVOS DE VACÍOS (Horno) CON OBSERVACIONES
     const motivosVacios = {};
     datosVacios.forEach(d => {
         const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
         const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        const obs = d['Observaciones'] || d.Observaciones || d.observaciones || '';
         
         if (!motivosVacios[motivo]) {
-            motivosVacios[motivo] = { minutos: 0, eventos: 0 };
+            motivosVacios[motivo] = { minutos: 0, eventos: 0, observaciones: [] };
         }
         motivosVacios[motivo].minutos += duracion;
         motivosVacios[motivo].eventos += 1;
+        
+        if (obs.trim()) {
+            motivosVacios[motivo].observaciones.push(obs);
+        }
     });
     
     const top5Vacios = Object.entries(motivosVacios)
@@ -23857,8 +23869,10 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
             
             return { 
                 etiqueta: etiqueta,
+                motivoOriginal: mot,
                 valor: data.minutos,
-                eventos: data.eventos
+                eventos: data.eventos,
+                observaciones: data.observaciones
             };
         })
         .sort((a, b) => b.valor - a.valor)
@@ -23883,17 +23897,147 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
     const totalMinutosParadas = top5Paradas.reduce((sum, m) => sum + m.valor, 0);
     const totalMinutosVacios = top5Vacios.reduce((sum, m) => sum + m.valor, 0);
     
+    // Crear acordeones con observaciones para Paradas
+    const acordeonesParadas = top5Paradas.map((item, idx) => {
+        const obsUnicas = [...new Set(item.observaciones)].slice(0, 10);
+        
+        return crearElemento('details', {
+            estilo: {
+                marginTop: '12px',
+                border: '1px solid var(--borde-suave)',
+                borderRadius: 'var(--redondeo-pequeno)',
+                overflow: 'hidden'
+            }
+        }, [
+            crearElemento('summary', {
+                estilo: {
+                    padding: '12px',
+                    cursor: 'pointer',
+                    background: 'var(--fondo-hundido)',
+                    fontWeight: '500',
+                    fontSize: 'var(--tamano-pequeno)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }
+            }, [
+                crearElemento('span', { texto: `${item.etiqueta.substring(0, 40)}...` }),
+                crearElemento('span', {
+                    estilo: { color: 'var(--acento)', fontWeight: '600' },
+                    texto: `${item.observaciones.length} obs`
+                })
+            ]),
+            crearElemento('div', { estilo: { padding: '12px' } }, [
+                crearElemento('ul', {
+                    estilo: {
+                        listStyle: 'disc',
+                        paddingLeft: '20px',
+                        fontSize: 'var(--tamano-pequeno)',
+                        lineHeight: '1.6'
+                    }
+                }, obsUnicas.map(obs =>
+                    crearElemento('li', {
+                        estilo: { marginBottom: '6px' },
+                        texto: obs
+                    })
+                ))
+            ])
+        ]);
+    });
+    
+    // Crear acordeones con observaciones para Vacíos
+    const acordeonesVacios = top5Vacios.map((item, idx) => {
+        const obsUnicas = [...new Set(item.observaciones)].slice(0, 10);
+        
+        return crearElemento('details', {
+            estilo: {
+                marginTop: '12px',
+                border: '1px solid var(--borde-suave)',
+                borderRadius: 'var(--redondeo-pequeno)',
+                overflow: 'hidden'
+            }
+        }, [
+            crearElemento('summary', {
+                estilo: {
+                    padding: '12px',
+                    cursor: 'pointer',
+                    background: 'var(--fondo-hundido)',
+                    fontWeight: '500',
+                    fontSize: 'var(--tamano-pequeno)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }
+            }, [
+                crearElemento('span', { texto: `${item.etiqueta.substring(0, 40)}...` }),
+                crearElemento('span', {
+                    estilo: { color: 'var(--acento)', fontWeight: '600' },
+                    texto: `${item.observaciones.length} obs`
+                })
+            ]),
+            crearElemento('div', { estilo: { padding: '12px' } }, [
+                crearElemento('ul', {
+                    estilo: {
+                        listStyle: 'disc',
+                        paddingLeft: '20px',
+                        fontSize: 'var(--tamano-pequeno)',
+                        lineHeight: '1.6'
+                    }
+                }, obsUnicas.map(obs =>
+                    crearElemento('li', {
+                        estilo: { marginBottom: '6px' },
+                        texto: obs
+                    })
+                ))
+            ])
+        ]);
+    });
+    
     return crearElemento('div', { clase: 'layout-rejilla-2' }, [
         // Panel TOP 5 Motivos de Paradas
         crearPanel({
             titulo: 'TOP 5 Motivos de Paradas',
             subtitulo: `Prensas y Línea Esmalte • ${top5Paradas.length} motivos • ${Math.round(totalMinutosParadas)} min`,
             icono: 'fabrica',
-            cuerpo: [graficoParadas]
+            cuerpo: [
+                graficoParadas,
+                crearElemento('div', { estilo: { marginTop: '16px' } }, [
+                    crearElemento('h5', {
+                        estilo: {
+                            fontSize: 'var(--tamano-pequeno)',
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            color: 'var(--texto-fuerte)'
+                        },
+                        texto: '📋 Ver observaciones por motivo:'
+                    }),
+                    ...acordeonesParadas
+                ])
+            ]
         }),
         
         // Panel TOP 5 Motivos de Vacíos
         crearPanel({
+            titulo: 'TOP 5 Motivos de Vacíos',
+            subtitulo: `Horno • ${top5Vacios.length} motivos • ${Math.round(totalMinutosVacios)} min`,
+            icono: 'alerta',
+            cuerpo: [
+                graficoVacios,
+                crearElemento('div', { estilo: { marginTop: '16px' } }, [
+                    crearElemento('h5', {
+                        estilo: {
+                            fontSize: 'var(--tamano-pequeno)',
+                            fontWeight: '600',
+                            marginBottom: '8px',
+                            color: 'var(--texto-fuerte)'
+                        },
+                        texto: '📋 Ver observaciones por motivo:'
+                    }),
+                    ...acordeonesVacios
+                ])
+            ]
+        })
+    ]);
             titulo: 'TOP 5 Motivos de Vacíos',
             subtitulo: `Horno • ${top5Vacios.length} motivos • ${Math.round(totalMinutosVacios)} min`,
             icono: 'alerta',
@@ -24060,15 +24204,49 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
     let graficoCambios;
     if (puntosCambios.length > 0) {
         const graficoBase = dibujarBarrasVerticales(puntosCambios, {
-            alto: 240,
+            alto: 260,
             formatearValor: (val) => `${Math.round(val)} min`,
             descripcion: 'Minutos de parada por cambio de producto por día',
             serieDeColor: 4
         });
         
-        // Agregar valores numéricos en la punta de las barras
-        // Como no podemos modificar el SVG directamente, agregaremos los valores en el tooltip mejorado
-        // El gráfico ya muestra los valores al pasar el mouse
+        // Agregar valores numéricos sobre las barras (modificar SVG)
+        // Calcular posiciones para los valores
+        const margenIzquierdo = 58;
+        const margenSuperior = 16;
+        const margenInferior = 68;
+        const anchoTotal = 800; // ANCHO_BASE
+        const anchoGrafico = anchoTotal - margenIzquierdo - 14;
+        const altoGrafico = 260 - margenSuperior - margenInferior;
+        
+        const valorMaximo = Math.max(...puntosCambios.map(p => p.valor));
+        const anchoPorRanura = anchoGrafico / puntosCambios.length;
+        const anchoBarra = Math.max(2, Math.min(72, anchoPorRanura * 0.82));
+        
+        // Calcular escala
+        const escala = calcularEscalaAgradable(0, valorMaximo, 5);
+        const alturaPorUnidad = escala.maximo > 0 ? altoGrafico / escala.maximo : 0;
+        
+        // Agregar textos con valores
+        puntosCambios.forEach((punto, indice) => {
+            const altoBarra = Math.max(0, (punto.valor || 0) * alturaPorUnidad);
+            const posicionX = margenIzquierdo + indice * anchoPorRanura + (anchoPorRanura - anchoBarra) / 2;
+            const posicionY = margenSuperior + altoGrafico - altoBarra;
+            const centroX = posicionX + anchoBarra / 2;
+            
+            // Crear texto del valor
+            const textoValor = crearTexto(Math.round(punto.valor), {
+                x: centroX,
+                y: posicionY - 6,
+                'text-anchor': 'middle',
+                'font-size': '12',
+                'font-weight': '600',
+                fill: 'var(--texto-fuerte)',
+                class: 'grafico-valor-barra'
+            });
+            
+            graficoBase.appendChild(textoValor);
+        });
         
         graficoCambios = graficoBase;
     } else {
