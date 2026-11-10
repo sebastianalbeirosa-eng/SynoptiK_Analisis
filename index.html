@@ -23774,7 +23774,7 @@ function crearPanelKPIsTiemposMuertos(datos, estado) {
 }
 
 /**
- * Crea panel de Rankings TOP 5 con gráficos de barras
+ * Crea panel de Rankings TOP 5 con gráficos de barras separados
  */
 function crearPanelRankingsTiemposMuertos(datos, estado) {
     if (!datos || datos.length === 0) {
@@ -23789,42 +23789,31 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         });
     }
     
-    // TOP 5 MÁQUINAS (Prensas, Línea Esmalte, etc.)
-    const maquinas = {};
-    datos.forEach(d => {
-        const maq = d['Máquina'] || d.Maquina || d.maquina || 'Sin máquina';
-        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
-        
-        if (!maquinas[maq]) {
-            maquinas[maq] = { minutos: 0, eventos: 0 };
-        }
-        maquinas[maq].minutos += duracion;
-        maquinas[maq].eventos += 1;
+    // Filtrar datos por tipo de máquina/proceso
+    const datosParadas = datos.filter(d => {
+        const maq = (d['Máquina'] || d.Maquina || d.maquina || '').toUpperCase();
+        return maq.includes('PRENSA') || maq.includes('LINEA ESMALTE') || maq.includes('LÍNEA ESMALTE');
     });
     
-    const top5Maquinas = Object.entries(maquinas)
-        .map(([maq, data]) => ({ 
-            clave: maq, 
-            valor: data.minutos,
-            eventos: data.eventos
-        }))
-        .sort((a, b) => b.valor - a.valor)
-        .slice(0, 5);
+    const datosVacios = datos.filter(d => {
+        const maq = (d['Máquina'] || d.Maquina || d.maquina || '').toUpperCase();
+        return maq.includes('HORNO');
+    });
     
-    // TOP 5 MOTIVOS (vacíos, quemado, fallas, etc.)
-    const motivos = {};
-    datos.forEach(d => {
+    // TOP 5 MOTIVOS DE PARADAS (Prensas y Línea Esmalte)
+    const motivosParadas = {};
+    datosParadas.forEach(d => {
         const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
         const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
         
-        if (!motivos[motivo]) {
-            motivos[motivo] = { minutos: 0, eventos: 0 };
+        if (!motivosParadas[motivo]) {
+            motivosParadas[motivo] = { minutos: 0, eventos: 0 };
         }
-        motivos[motivo].minutos += duracion;
-        motivos[motivo].eventos += 1;
+        motivosParadas[motivo].minutos += duracion;
+        motivosParadas[motivo].eventos += 1;
     });
     
-    const top5Motivos = Object.entries(motivos)
+    const top5Paradas = Object.entries(motivosParadas)
         .map(([mot, data]) => ({ 
             clave: mot, 
             valor: data.minutos,
@@ -23833,51 +23822,80 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
     
-    // Crear gráfico de barras horizontales para Máquinas
-    const graficoMaquinas = dibujarBarrasHorizontales(top5Maquinas, {
-        alto: 280,
-        mostrarValores: true,
-        formatearValor: (val) => `${Math.round(val)} min`,
-        formatearEtiqueta: (item) => `${item.clave.substring(0, 25)}${item.clave.length > 25 ? '...' : ''}`,
-        colorBase: '#3b82f6'
+    // TOP 5 MOTIVOS DE VACÍOS (Horno)
+    const motivosVacios = {};
+    datosVacios.forEach(d => {
+        const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!motivosVacios[motivo]) {
+            motivosVacios[motivo] = { minutos: 0, eventos: 0 };
+        }
+        motivosVacios[motivo].minutos += duracion;
+        motivosVacios[motivo].eventos += 1;
     });
     
-    // Crear gráfico de barras horizontales para Motivos
-    const graficoMotivos = dibujarBarrasHorizontales(top5Motivos, {
+    const top5Vacios = Object.entries(motivosVacios)
+        .map(([mot, data]) => ({ 
+            clave: mot, 
+            valor: data.minutos,
+            eventos: data.eventos
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
+    
+    // Crear gráfico de barras horizontales para Paradas
+    const graficoParadas = top5Paradas.length > 0 ? dibujarBarrasHorizontales(top5Paradas, {
         alto: 280,
         mostrarValores: true,
         formatearValor: (val) => `${Math.round(val)} min`,
         formatearEtiqueta: (item) => {
             const texto = item.clave;
-            // Extraer código si existe (P307 - DESCRIPCION)
             const match = texto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
             if (match) {
                 const [, codigo, desc] = match;
-                return `${codigo}: ${desc.substring(0, 35)}${desc.length > 35 ? '...' : ''}`;
+                return `${codigo}: ${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}`;
             }
-            return `${texto.substring(0, 40)}${texto.length > 40 ? '...' : ''}`;
+            return `${texto.substring(0, 35)}${texto.length > 35 ? '...' : ''}`;
+        },
+        colorBase: '#3b82f6'
+    }) : crearEstadoVacio({ titulo: 'Sin datos de paradas', icono: 'info' });
+    
+    // Crear gráfico de barras horizontales para Vacíos
+    const graficoVacios = top5Vacios.length > 0 ? dibujarBarrasHorizontales(top5Vacios, {
+        alto: 280,
+        mostrarValores: true,
+        formatearValor: (val) => `${Math.round(val)} min`,
+        formatearEtiqueta: (item) => {
+            const texto = item.clave;
+            const match = texto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+            if (match) {
+                const [, codigo, desc] = match;
+                return `${codigo}: ${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}`;
+            }
+            return `${texto.substring(0, 35)}${texto.length > 35 ? '...' : ''}`;
         },
         colorBase: '#f59e0b'
-    });
+    }) : crearEstadoVacio({ titulo: 'Sin datos de vacíos', icono: 'info' });
     
-    const totalMinutosMaq = top5Maquinas.reduce((sum, m) => sum + m.valor, 0);
-    const totalMinutosMot = top5Motivos.reduce((sum, m) => sum + m.valor, 0);
+    const totalMinutosParadas = top5Paradas.reduce((sum, m) => sum + m.valor, 0);
+    const totalMinutosVacios = top5Vacios.reduce((sum, m) => sum + m.valor, 0);
     
     return crearElemento('div', { clase: 'layout-rejilla-2' }, [
-        // Panel TOP 5 Máquinas
+        // Panel TOP 5 Motivos de Paradas
         crearPanel({
-            titulo: 'TOP 5 Máquinas con Más Paradas',
-            subtitulo: `${top5Maquinas.length} máquinas • ${Math.round(totalMinutosMaq)} min acumulados`,
+            titulo: 'TOP 5 Motivos de Paradas',
+            subtitulo: `Prensas y Línea Esmalte • ${top5Paradas.length} motivos • ${Math.round(totalMinutosParadas)} min`,
             icono: 'fabrica',
-            cuerpo: [graficoMaquinas]
+            cuerpo: [graficoParadas]
         }),
         
-        // Panel TOP 5 Motivos
+        // Panel TOP 5 Motivos de Vacíos
         crearPanel({
-            titulo: 'TOP 5 Motivos de Parada',
-            subtitulo: `${top5Motivos.length} motivos • ${Math.round(totalMinutosMot)} min acumulados`,
+            titulo: 'TOP 5 Motivos de Vacíos',
+            subtitulo: `Horno • ${top5Vacios.length} motivos • ${Math.round(totalMinutosVacios)} min`,
             icono: 'alerta',
-            cuerpo: [graficoMotivos]
+            cuerpo: [graficoVacios]
         })
     ]);
 }
@@ -23911,6 +23929,9 @@ function dibujarVistaTiemposMuertos(contenedor, {
     // Rankings TOP 5
     partes.push(crearPanelRankingsTiemposMuertos(datosFiltrados, estado));
     
+    // Panel especial: Cambio de Producto
+    partes.push(crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado));
+    
     // Gráfico temporal de evolución
     partes.push(crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado));
     
@@ -23918,6 +23939,203 @@ function dibujarVistaTiemposMuertos(contenedor, {
     partes.push(crearPanelFiltrosJerarquicosTiemposMuertos(datosFiltrados, estado));
     
     reemplazarContenido(contenedor, partes);
+}
+
+/**
+ * Panel especial para Cambio de Producto
+ * Muestra minutos acumulados por cambios de modelo/producto y evolución
+ * @param {Array} datosFiltrados - Datos filtrados
+ * @param {object} estado - Estado de la aplicación
+ * @returns {HTMLElement} Panel
+ */
+function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
+    if (!datosFiltrados || datosFiltrados.length === 0) {
+        return crearPanel({
+            titulo: 'Análisis de Cambio de Producto',
+            icono: 'intercambio',
+            cuerpo: [crearEstadoVacio({
+                titulo: 'Sin datos',
+                ayuda: 'No hay registros de cambios de producto',
+                icono: 'info'
+            })]
+        });
+    }
+    
+    // Filtrar solo registros de cambio de producto/diseño
+    const datosCambios = datosFiltrados.filter(d => {
+        const motivo = (d['Motivo'] || d.Motivo || d.motivo || '').toUpperCase();
+        return motivo.includes('CAMBIO DE DISEÑO') || 
+               motivo.includes('CAMBIO DE DISE') || 
+               motivo.includes('CAMBIO DE PRODUCTO') ||
+               motivo.includes('P408') ||
+               motivo.includes('Q324') ||
+               motivo.includes('E334');
+    });
+    
+    if (datosCambios.length === 0) {
+        return crearPanel({
+            titulo: 'Análisis de Cambio de Producto',
+            icono: 'intercambio',
+            cuerpo: [crearEstadoVacio({
+                titulo: 'Sin cambios registrados',
+                ayuda: 'No se encontraron registros de cambio de producto en el periodo',
+                icono: 'info'
+            })]
+        });
+    }
+    
+    // Calcular totales
+    const totalMinutosCambios = datosCambios.reduce((sum, d) => {
+        return sum + parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+    }, 0);
+    
+    const totalMinutosGeneral = datosFiltrados.reduce((sum, d) => {
+        return sum + parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+    }, 0);
+    
+    const porcentaje = totalMinutosGeneral > 0 ? (totalMinutosCambios / totalMinutosGeneral * 100) : 0;
+    
+    // Agrupar por día
+    const porDia = {};
+    datosCambios.forEach(d => {
+        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
+        if (!fechaStr) return;
+        
+        let dia;
+        if (typeof fechaStr === 'string') {
+            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (match) dia = parseInt(match[3], 10);
+        } else if (fechaStr instanceof Date) {
+            dia = fechaStr.getDate();
+        }
+        
+        if (!dia) return;
+        
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!porDia[dia]) {
+            porDia[dia] = 0;
+        }
+        porDia[dia] += duracion;
+    });
+    
+    // Convertir a array para gráfico
+    const puntosCambios = Object.entries(porDia)
+        .map(([dia, minutos]) => ({
+            clave: `Día ${dia}`,
+            valor: minutos
+        }))
+        .sort((a, b) => {
+            const diaA = parseInt(a.clave.replace('Día ', ''));
+            const diaB = parseInt(b.clave.replace('Día ', ''));
+            return diaA - diaB;
+        });
+    
+    // Crear gráfico de barras
+    const graficoCambios = puntosCambios.length > 0 ? dibujarBarras(puntosCambios, {
+        alto: 220,
+        mostrarValores: false,
+        formatearValor: (val) => `${Math.round(val)} min`,
+        colorBase: '#8b5cf6'
+    }) : crearEstadoVacio({ titulo: 'Sin datos para graficar', icono: 'info' });
+    
+    // KPIs de cambio de producto
+    const kpisCambios = crearElemento('div', {
+        estilo: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '20px'
+        }
+    }, [
+        crearElemento('div', {
+            estilo: {
+                padding: '16px',
+                background: 'var(--fondo-hundido)',
+                borderRadius: 'var(--redondeo-medio)',
+                borderLeft: '4px solid #8b5cf6'
+            }
+        }, [
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
+                texto: 'Total Minutos Cambios'
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
+                texto: `${Math.round(totalMinutosCambios)} min`
+            })
+        ]),
+        crearElemento('div', {
+            estilo: {
+                padding: '16px',
+                background: 'var(--fondo-hundido)',
+                borderRadius: 'var(--redondeo-medio)',
+                borderLeft: '4px solid #8b5cf6'
+            }
+        }, [
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
+                texto: 'Cambios Registrados'
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
+                texto: datosCambios.length
+            })
+        ]),
+        crearElemento('div', {
+            estilo: {
+                padding: '16px',
+                background: 'var(--fondo-hundido)',
+                borderRadius: 'var(--redondeo-medio)',
+                borderLeft: '4px solid #f59e0b'
+            }
+        }, [
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
+                texto: '% del Total de Paradas'
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: '#f59e0b' },
+                texto: `${porcentaje.toFixed(1)}%`
+            })
+        ]),
+        crearElemento('div', {
+            estilo: {
+                padding: '16px',
+                background: 'var(--fondo-hundido)',
+                borderRadius: 'var(--redondeo-medio)',
+                borderLeft: '4px solid #06b6d4'
+            }
+        }, [
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
+                texto: 'Promedio por Cambio'
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
+                texto: `${datosCambios.length > 0 ? Math.round(totalMinutosCambios / datosCambios.length) : 0} min`
+            })
+        ])
+    ]);
+    
+    return crearPanel({
+        titulo: '🔄 Análisis Especial: Cambio de Producto / Modelo',
+        subtitulo: `Impacto de cambios de diseño en los tiempos muertos del mes`,
+        icono: 'intercambio',
+        cuerpo: [
+            kpisCambios,
+            crearElemento('h4', {
+                estilo: {
+                    fontSize: 'var(--tamano-comodo)',
+                    fontWeight: '600',
+                    marginBottom: '12px',
+                    color: 'var(--texto-fuerte)'
+                },
+                texto: 'Evolución de Minutos por Día'
+            }),
+            graficoCambios
+        ]
+    });
 }
 
 /* ============ js/vistas/vistaTiemposMuertos.js ============ */
