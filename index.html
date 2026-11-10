@@ -23814,11 +23814,21 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
     });
     
     const top5Paradas = Object.entries(motivosParadas)
-        .map(([mot, data]) => ({ 
-            clave: mot, 
-            valor: data.minutos,
-            eventos: data.eventos
-        }))
+        .map(([mot, data]) => {
+            // Extraer código y descripción
+            const match = mot.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+            let etiqueta = mot;
+            if (match) {
+                const [, codigo, desc] = match;
+                etiqueta = `${codigo}: ${desc}`;
+            }
+            
+            return { 
+                etiqueta: etiqueta,
+                valor: data.minutos,
+                eventos: data.eventos
+            };
+        })
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
     
@@ -23836,11 +23846,21 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
     });
     
     const top5Vacios = Object.entries(motivosVacios)
-        .map(([mot, data]) => ({ 
-            clave: mot, 
-            valor: data.minutos,
-            eventos: data.eventos
-        }))
+        .map(([mot, data]) => {
+            // Extraer código y descripción
+            const match = mot.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+            let etiqueta = mot;
+            if (match) {
+                const [, codigo, desc] = match;
+                etiqueta = `${codigo}: ${desc}`;
+            }
+            
+            return { 
+                etiqueta: etiqueta,
+                valor: data.minutos,
+                eventos: data.eventos
+            };
+        })
         .sort((a, b) => b.valor - a.valor)
         .slice(0, 5);
     
@@ -23849,16 +23869,7 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         alto: 280,
         mostrarValores: true,
         formatearValor: (val) => `${Math.round(val)} min`,
-        formatearEtiqueta: (item) => {
-            const texto = item.clave;
-            const match = texto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
-            if (match) {
-                const [, codigo, desc] = match;
-                return `${codigo}: ${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}`;
-            }
-            return `${texto.substring(0, 35)}${texto.length > 35 ? '...' : ''}`;
-        },
-        colorBase: '#3b82f6'
+        serieDeColor: 0
     }) : crearEstadoVacio({ titulo: 'Sin datos de paradas', icono: 'info' });
     
     // Crear gráfico de barras horizontales para Vacíos
@@ -23866,16 +23877,7 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         alto: 280,
         mostrarValores: true,
         formatearValor: (val) => `${Math.round(val)} min`,
-        formatearEtiqueta: (item) => {
-            const texto = item.clave;
-            const match = texto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
-            if (match) {
-                const [, codigo, desc] = match;
-                return `${codigo}: ${desc.substring(0, 30)}${desc.length > 30 ? '...' : ''}`;
-            }
-            return `${texto.substring(0, 35)}${texto.length > 35 ? '...' : ''}`;
-        },
-        colorBase: '#f59e0b'
+        serieDeColor: 1
     }) : crearEstadoVacio({ titulo: 'Sin datos de vacíos', icono: 'info' });
     
     const totalMinutosParadas = top5Paradas.reduce((sum, m) => sum + m.valor, 0);
@@ -24128,10 +24130,18 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
                 estilo: {
                     fontSize: 'var(--tamano-comodo)',
                     fontWeight: '600',
-                    marginBottom: '12px',
+                    marginBottom: '8px',
                     color: 'var(--texto-fuerte)'
                 },
-                texto: 'Evolución de Minutos por Día'
+                texto: '📊 Minutos de Parada por Cambio de Producto - Evolución Diaria'
+            }),
+            crearElemento('p', {
+                estilo: {
+                    fontSize: 'var(--tamano-pequeno)',
+                    color: 'var(--texto-suave)',
+                    marginBottom: '12px'
+                },
+                texto: 'Este gráfico muestra solo los días donde hubo cambios de modelo/diseño/producto'
             }),
             graficoCambios
         ]
@@ -24493,20 +24503,29 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                             .sort((a, b) => b[1] - a[1]);
                         if (motivosDelDia.length > 0) {
                             const motivoCompleto = motivosDelDia[0][0];
-                            // Extraer código y descripción
+                            // Extraer código y descripción SIN RECORTAR
                             const match = motivoCompleto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
                             if (match) {
-                                motivoPrincipalDia = `${match[1]}: ${match[2].substring(0, 30)}${match[2].length > 30 ? '...' : ''}`;
+                                motivoPrincipalDia = `${match[1]}: ${match[2]}`;
                             } else {
-                                motivoPrincipalDia = motivoCompleto.substring(0, 35) + (motivoCompleto.length > 35 ? '...' : '');
+                                motivoPrincipalDia = motivoCompleto;
                             }
                         }
                     }
                     
                     return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
-                        crearElemento('td', { clase: 'celda-lista' }, `Día ${dia}`),
-                        crearElemento('td', { clase: 'celda-numero', texto: Math.round(pico.valor) }),
-                        crearElemento('td', { clase: 'celda-lista', estilo: { maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, motivoPrincipalDia)
+                        crearElemento('td', { clase: 'celda-lista', estilo: { minWidth: '80px' } }, `Día ${dia}`),
+                        crearElemento('td', { clase: 'celda-numero', estilo: { minWidth: '100px' }, texto: Math.round(pico.valor) }),
+                        crearElemento('td', { 
+                            clase: 'celda-lista', 
+                            estilo: { 
+                                minWidth: '400px',
+                                maxWidth: '600px',
+                                whiteSpace: 'normal',
+                                wordWrap: 'break-word',
+                                lineHeight: '1.4'
+                            } 
+                        }, motivoPrincipalDia)
                     ]);
                 }))
             ])
