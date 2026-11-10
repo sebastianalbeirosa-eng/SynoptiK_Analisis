@@ -24217,14 +24217,16 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
         valor: punto.valor
     }));
     
-    const graficoLinea = dibujarLineaCLásico(datosLinea, {
+    const graficoLinea = dibujarLinea(datosLinea, {
         alto: 260,
         descripcion: 'Evolución de los minutos de parada por día del mes',
         mostrarArea: true,
-        rotuloDestacado: diasConPicos.length > 0 ? diasConPicos[0] : null,
-        etiquetasDestacadas: diasConPicos.length > 0 ? diasConPicos : null,
         formatearValor: (val) => `${Math.round(val)} min`,
-        serieDeColor: 1
+        rotuloDestacado: diasConPicos.length > 0 ? {
+            indice: puntos.findIndex(p => p.fecha === diasConPicos[0].titulo.replace('Día ', '')),
+            titulo: diasConPicos[0].titulo,
+            detalle: diasConPicos[0].detalle
+        } : null
     });
     
     return crearElemento('div', { clase: 'tarjeta-panel' }, [
