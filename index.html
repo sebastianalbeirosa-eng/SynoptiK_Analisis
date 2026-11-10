@@ -24311,7 +24311,7 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         ])
     )) : null;
     
-    // Crear tabla de observaciones por día
+    // Crear tabla de observaciones por día CON ACORDEONES
     const tablaObservaciones = puntosCambios.length > 0 ? crearElemento('div', {
         estilo: { marginTop: '24px' }
     }, [
@@ -24336,20 +24336,71 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
                 ])
             ]),
             crearElemento('tbody', {}, puntosCambios.map(punto => {
-                const obsTexto = punto.observaciones.length > 0
-                    ? punto.observaciones.join(' • ')
-                    : 'Sin observación registrada';
+                const tieneObservaciones = punto.observaciones.length > 0;
+                
+                // Crear acordeón si hay observaciones
+                const contenidoObs = tieneObservaciones 
+                    ? crearElemento('details', {
+                        estilo: {
+                            marginTop: '2px',
+                            padding: '6px',
+                            background: 'var(--fondo-hundido)',
+                            borderRadius: 'var(--redondeo-pequeno)',
+                            border: '1px solid var(--borde-suave)'
+                        }
+                    }, [
+                        crearElemento('summary', {
+                            estilo: {
+                                cursor: 'pointer',
+                                fontWeight: '500',
+                                fontSize: 'var(--tamano-pequeno)',
+                                color: 'var(--acento)',
+                                padding: '4px'
+                            }
+                        }, [
+                            crearElemento('span', { 
+                                texto: `${punto.observaciones.length} observación${punto.observaciones.length > 1 ? 'es' : ''} ▼` 
+                            })
+                        ]),
+                        crearElemento('div', {
+                            estilo: {
+                                marginTop: '6px',
+                                paddingLeft: '4px',
+                                fontSize: 'var(--tamano-pequeno)',
+                                lineHeight: '1.6'
+                            }
+                        }, punto.observaciones.map((obs, idx) => 
+                            crearElemento('div', {
+                                estilo: {
+                                    padding: '4px 0',
+                                    borderBottom: idx < punto.observaciones.length - 1 ? '1px solid var(--borde-suave)' : 'none',
+                                    fontSize: 'var(--tamano-muy-pequeno)'
+                                }
+                            }, [
+                                crearElemento('span', { texto: `• ${obs}` })
+                            ])
+                        ))
+                    ])
+                    : crearElemento('span', { 
+                        estilo: { 
+                            fontSize: 'var(--tamano-pequeno)', 
+                            color: 'var(--texto-tenue)',
+                            fontStyle: 'italic'
+                        },
+                        texto: 'Sin observación registrada'
+                    });
                 
                 return crearElemento('tr', {}, [
                     crearElemento('td', { 
                         clase: 'celda-lista',
-                        estilo: { fontWeight: '600' }
+                        estilo: { fontWeight: '600', verticalAlign: 'top' }
                     }, `Día ${punto.dia}`),
                     crearElemento('td', { 
                         clase: 'celda-numero',
                         estilo: { 
                             color: 'var(--acento)',
-                            fontWeight: '600'
+                            fontWeight: '600',
+                            verticalAlign: 'top'
                         },
                         texto: `${Math.round(punto.valor)} min`
                     }),
@@ -24358,9 +24409,10 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
                         estilo: {
                             lineHeight: '1.5',
                             whiteSpace: 'normal',
-                            wordWrap: 'break-word'
+                            wordWrap: 'break-word',
+                            verticalAlign: 'top'
                         }
-                    }, obsTexto)
+                    }, [contenidoObs])
                 ]);
             }))
         ])
