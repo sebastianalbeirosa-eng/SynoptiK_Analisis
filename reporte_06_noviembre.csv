@@ -1,0 +1,8 @@
+Turno,Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos,Observaciones
+Mañana,07:00,P-02,Falla de motor de banda,50,15,Sobrecalentamiento motor
+Mañana,11:00,P-01,Falla de sensor de presión,35,10,Sensor con lectura errática
+Mañana,16:00,P-05,Obstrucción en linea,25,8,Limpieza de cinta
+Tarde,17:30,P-03,Mantenimiento preventivo,40,0,Limpieza de filtros
+Tarde,20:00,P-04,Falla de horno industrial,70,60,Horno con falla térmica
+Noche,22:00,P-01,Falla de sensor de temperatura,30,10,Recalibración
+Noche,00:30,P-06,Vacío de horno por parada,0,50,Enfriamiento por parada

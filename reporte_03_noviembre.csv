@@ -1,0 +1,9 @@
+Turno,Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos,Observaciones
+Mañana,07:00,P-04,Falla de horno industrial,120,90,Resistencia quemada, se reemplazó
+Mañana,10:15,P-01,Falla de sensor de temperatura,30,10,Limpieza de sensor
+Mañana,15:30,P-02,Falla de motor,45,20,Revisión de conexión eléctrica
+Tarde,17:00,P-05,Obstrucción en tolva,20,5,Retiro de material atascado
+Tarde,19:45,P-03,Mantenimiento preventivo,50,0,Revisión general de equipo
+Noche,22:15,P-01,Falla de sensor de temperatura,35,15,Recalibración
+Noche,00:45,P-04,Falla de horno industrial,60,45,Ajuste de termostato
+Noche,03:30,P-06,Vacío de horno,0,55,Enfriamiento por parada extendida

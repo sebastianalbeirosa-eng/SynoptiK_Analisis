@@ -1,0 +1,38 @@
+REPORTE DE PRODUCCIÓN - NOVIEMBRE
+Planta: Línea de Horno Industrial
+Fecha: Noviembre 2026
+
+TURNO MAÑANA
+
+Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos de Horno,Observaciones
+06:30,P-01,Falla de sensor de temperatura,45,20,Sensor fuera de rango, se recalibró
+08:15,P-03,Mantenimiento preventivo banda,60,0,Revisión y lubricación de rodillos
+10:45,P-02,Corte de energía sector 2,30,15,Reactivación de interruptor diferencial
+14:20,P-05,Obstrucción en tolva,25,10,Se limpió la obstrucción manualmente
+
+Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+09:00,Falla de sensor de temperatura,Reemplazo de sensor y recalibración,Juan Pérez,Cerrado,Sensor nuevo instalado y verificado
+11:30,Mantenimiento banda transportadora,Lubricación de rodillos y ajuste de tensión,María García,Cerrado,Banda operando sin ruidos
+15:00,Corte de energía sector 2,Revisión de interruptor diferencial,Carlos López,Cerrado,Restaurado suministro eléctrico
+
+TURNO TARDE
+
+Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos de Horno,Observaciones
+15:00,P-01,Falla de sensor de temperatura,50,35,Reemplazo de sensor defectuoso
+17:30,P-04,Falla de horno industrial,90,75,Horno no alcanzaba temperatura, se revisó resistencia
+20:10,P-02,Mantenimiento correctivo motor,40,5,Cambio de cojinetes del motor principal
+
+Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+16:00,Falla de horno industrial,Reemplazo de resistencia calentadora,Pedro Ramírez,Cerrado,Horno alcanzando temperatura nominal
+21:00,Mantenimiento correctivo motor,Cambio de cojinetes y alineación,Ana Martínez,Cerrado,Motor funcionando sin vibraciones
+
+TURNO NOCHE
+
+Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos de Horno,Observaciones
+22:00,P-01,Falla de sensor de temperatura,35,15,Limpieza de lente del sensor
+23:45,P-06,Vacío de horno por parada,0,60,El horno se enfrió durante parada no planificada
+01:15,P-03,Limpieza de filtro de aire,30,0,Mantenimiento rutinario de filtro
+
+Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+23:00,Falla de sensor de temperatura,Limpieza y calibración de sensor,Luis Fernández,Cerrado,Sensor reportando valores correctos
+02:30,Vacío de horno por parada,Revisión de sellado de puerta del horno,Carmen Ruiz,En proceso,Pendiente verificación de hermeticidad

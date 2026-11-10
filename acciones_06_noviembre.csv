@@ -1,0 +1,7 @@
+Turno,Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+Mañana,09:00,Falla de motor de banda,Revisión de ventilación,Juan Pérez,Cerrado,Ventilación limpia
+Mañana,14:00,Falla de sensor de presión,Recalibración,María García,Cerrado,Sensor verificado
+Tarde,18:00,Falla de horno industrial,Reparación de resistencia,Pedro Ramírez,Cerrado,Horno a temperatura
+Tarde,20:30,Obstruccion en linea,Limpieza de cinta,Ana Martínez,Cerrado,Limpieza completada
+Noche,23:00,Falla de sensor de temperatura,Limpieza y ajuste,Luis Fernández,Cerrado,Sensor OK
+Noche,04:00,Vacío de horno por parada,Revision de calentamiento,Carmen Ruiz,Pendiente,Esperando repuesto

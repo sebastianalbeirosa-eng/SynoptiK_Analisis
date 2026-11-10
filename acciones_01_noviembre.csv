@@ -1,0 +1,8 @@
+Turno,Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+Mañana,09:00,Falla de sensor de temperatura,Reemplazo de sensor y recalibración,Juan Pérez,Cerrado,Sensor nuevo instalado y verificado con equipo de prueba
+Mañana,11:30,Mantenimiento banda transportadora,Lubricación de rodillos y ajuste de tensión,María García,Cerrado,Banda operando sin ruidos anómalos
+Mañana,15:00,Corte de energía sector 2,Revisión de interruptor diferencial y conexión,Carlos López,Cerrado,Restaurado suministro eléctrico
+Tarde,16:00,Falla de horno industrial,Reemplazo de resistencia calentadora,Pedro Ramírez,Cerrado,Horno alcanzando temperatura nominal
+Tarde,21:00,Mantenimiento correctivo motor,Cambio de cojinetes y alineación,Ana Martínez,Cerrado,Motor funcionando sin vibraciones
+Noche,23:00,Falla de sensor de temperatura,Limpieza y calibración de sensor,Luis Fernández,Cerrado,Sensor reportando valores correctos
+Noche,02:30,Vacío de horno por parada,Revisión de sellado de puerta del horno,Carmen Ruiz,En proceso,Pendiente verificación de hermeticidad

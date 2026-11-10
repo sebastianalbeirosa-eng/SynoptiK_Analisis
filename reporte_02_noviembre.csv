@@ -1,0 +1,9 @@
+Turno,Hora,Cód. Motivo,Motivo Parada,Minutos Parada,Minutos Vacíos,Observaciones
+Mañana,06:45,P-02,Falla de motor de banda,55,10,Sobrecalentamiento del motor, se revisó ventilación
+Mañana,09:20,P-01,Falla de sensor de presión,40,15,Sensor de presión con lectura errática
+Mañana,13:10,P-04,Falla de horno,75,50,Horno con fuga de calor en puerta
+Tarde,16:45,P-03,Mantenimiento preventivo,45,0,Limpieza de filtros y ductos
+Tarde,19:00,P-05,Obstrucción en línea de producción,35,20,Retiro de material acumulado en cinta
+Noche,22:30,P-02,Falla de motor de banda,60,30,Reemplazo de correa del motor
+Noche,00:15,P-01,Falla de sensor de presión,25,10,Ajuste de calibración del sensor
+Noche,03:00,P-06,Vacío de horno por parada,0,45,Enfriamiento no planificado del horno

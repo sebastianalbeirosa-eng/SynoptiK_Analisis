@@ -15275,11 +15275,11 @@ function calcularCalidad({
 
     // --- Completitud (hasta 40 puntos de descuento) ---
     const porcentajeVacios = totalCeldas > 0 ? (celdasVacias / totalCeldas) * 100 : 0;
-    if (porcentajeVacios > 0) {
-        // El descuento crece mas rapido al principio: pasar del 0% al 10% de
-        // vacios es mucho mas grave que pasar del 50% al 60%, porque en el
-        // primer caso se pierde la confianza en un dataset que parecia limpio.
-        const descuento = Math.min(40, Math.sqrt(porcentajeVacios) * 6.5);
+    if (porcentajeVacios > 30) {
+        // AJUSTE para reportes operativos: No penalizar si hay pocas columnas opcionales vacías
+        // En reportes de producción, campos como Observaciones, números de aviso, etc. pueden estar vacíos
+        // Solo se considera problema de calidad si está vacío más del 30% del dataset
+        const descuento = Math.min(40, Math.sqrt(porcentajeVacios - 30) * 6.5);
         puntaje -= descuento;
         descuentos.push({
             concepto: 'Valores faltantes',
@@ -19534,7 +19534,7 @@ function normalizarDataset(filas, columnasDeclaradas = []) {
         }
 
         const fila = {};
-        let tieneAlgunDato = false;
+        let camposNoVacios = 0;
 
         for (const clave in filaOriginal) {
             const limpia = obtenerNombreLimpio(clave);
@@ -19542,13 +19542,15 @@ function normalizarDataset(filas, columnasDeclaradas = []) {
                 const valor = filaOriginal[clave];
                 const valFinal = valor === null || valor === undefined ? '' : valor;
                 fila[limpia] = valFinal;
-                if (!tieneAlgunDato && !estaVacio(valFinal)) {
-                    tieneAlgunDato = true;
+                if (!estaVacio(valFinal)) {
+                    camposNoVacios++;
                 }
             }
         }
 
-        if (!tieneAlgunDato) {
+        // Solo descartar si TODOS los campos están vacíos o si tiene menos de 2 campos con datos
+        // Esto evita descartar filas válidas que tienen algunas columnas opcionales vacías
+        if (camposNoVacios < 2) {
             filasVaciasDescartadas += 1;
             continue;
         }
@@ -33403,7 +33405,7 @@ function crearPanelProblemas(analisis) {
  */
 const vista = {
     pagina: 1,
-    filasPorPagina: 50,
+    filasPorPagina: 250,
     columnaDeOrden: null,
     ordenAscendente: true,
     columnasVisibles: null,   // null significa "todas"

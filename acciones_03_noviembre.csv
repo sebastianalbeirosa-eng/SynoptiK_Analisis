@@ -1,0 +1,8 @@
+Turno,Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+Mañana,08:30,Falla de horno industrial,Reemplazo de resistencia calentadora,Juan Pérez,Cerrado,Horno operativo
+Mañana,11:00,Falla de sensor de temperatura,Limpieza y ajuste,María García,Cerrado,Sensor verificado
+Mañana,16:30,Falla de motor,Revisión de conexión eléctrica,Pedro Ramírez,Cerrado,Motor sin fallas
+Tarde,18:00,Obstrucción en tolva,Limpieza de tolva,Ana Martínez,Cerrado,Flujo normal restaurado
+Tarde,20:30,Mantenimiento preventivo,Revisión general de equipo,Luis Fernández,Cerrado,Todo en orden
+Noche,23:15,Falla de sensor de temperatura,Recalibración de sensor,Carmen Ruiz,Cerrado,Valores dentro de rango
+Noche,01:30,Falla de horno industrial,Ajuste de termostato,Luis Fernández,Cerrado,Temperatura estable

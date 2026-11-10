@@ -1,0 +1,7 @@
+Turno,Hora,Problema/Defecto,Acción Correctiva / Preventiva,Responsable,Estado,Observaciones
+Mañana,10:30,Falla de motor de banda,Revisión de ventilación y limpieza de filtros,Juan Pérez,Cerrado,Motor temperatura normalizada
+Mañana,14:00,Falla de sensor de presión,Recalibración de sensor,María García,Cerrado,Lecturas estables
+Tarde,17:30,Falla de horno,Reparación de sello de puerta,Pedro Ramírez,Cerrado,Pérdida de calor eliminada
+Tarde,20:00,Obstrucción en línea,Limpieza de cinta transportadora,Ana Martínez,Cerrado,Línea operativa al 100%
+Noche,23:30,Falla de motor de banda,Cambio de correa y tensión,Luis Fernández,Cerrado,Motor funcionando correctamente
+Noche,04:00,Vacío de horno por parada,Revisión de sistema de calentamiento,Carmen Ruiz,Pendiente,Esperando repuestos

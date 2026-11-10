@@ -1,0 +1,7 @@
+Código,Descripción,Tipo
+P-01,Falla de sensor de temperatura,Sensor
+P-02,Falla de motor / energía,Eléctrico
+P-03,Mantenimiento preventivo,Mantenimiento
+P-04,Falla de horno industrial,Horno
+P-05,Obstrucción en tolva/línea,Mecánico
+P-06,Vacío de horno por parada,Horno
