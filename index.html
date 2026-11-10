@@ -23997,6 +23997,27 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
     
     const porcentaje = totalMinutosGeneral > 0 ? (totalMinutosCambios / totalMinutosGeneral * 100) : 0;
     
+    // Calcular promedio diario sobre TODOS los días del mes (no solo días con cambios)
+    // Si estamos en día 7 del mes, promediamos sobre 7 días (incluso si solo hubo cambios en 2 días)
+    const diasDelMes = new Set();
+    datosFiltrados.forEach(d => {
+        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
+        if (!fechaStr) return;
+        
+        let dia;
+        if (typeof fechaStr === 'string') {
+            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (match) dia = parseInt(match[3], 10);
+        } else if (fechaStr instanceof Date) {
+            dia = fechaStr.getDate();
+        }
+        
+        if (dia) diasDelMes.add(dia);
+    });
+    
+    const totalDiasDelMes = diasDelMes.size;
+    const promedioDiario = totalDiasDelMes > 0 ? (totalMinutosCambios / totalDiasDelMes) : 0;
+    
     // Agrupar por día
     const porDia = {};
     datosCambios.forEach(d => {
@@ -24045,7 +24066,7 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
     const kpisCambios = crearElemento('div', {
         estilo: {
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
             gap: '16px',
             marginBottom: '20px'
         }
@@ -24060,11 +24081,32 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         }, [
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
-                texto: 'Total Minutos Cambios'
+                texto: 'Total Minutos Acumulados'
             }),
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
                 texto: `${Math.round(totalMinutosCambios)} min`
+            })
+        ]),
+        crearElemento('div', {
+            estilo: {
+                padding: '16px',
+                background: 'var(--fondo-hundido)',
+                borderRadius: 'var(--redondeo-medio)',
+                borderLeft: '4px solid #06b6d4'
+            }
+        }, [
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
+                texto: `Promedio Diario (${totalDiasDelMes} días)`
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: '#06b6d4' },
+                texto: `${Math.round(promedioDiario)} min/día`
+            }),
+            crearElemento('div', {
+                estilo: { fontSize: 'var(--tamano-muy-pequeno)', color: 'var(--texto-tenue)', marginTop: '4px', fontStyle: 'italic' },
+                texto: `Incluye días sin cambios`
             })
         ]),
         crearElemento('div', {
@@ -24077,7 +24119,7 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         }, [
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
-                texto: 'Cambios Registrados'
+                texto: 'Eventos de Cambio'
             }),
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
@@ -24094,31 +24136,22 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
         }, [
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
-                texto: '% del Total de Paradas'
+                texto: '% del Total Paradas'
             }),
             crearElemento('div', {
                 estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: '#f59e0b' },
                 texto: `${porcentaje.toFixed(1)}%`
             })
-        ]),
-        crearElemento('div', {
-            estilo: {
-                padding: '16px',
-                background: 'var(--fondo-hundido)',
-                borderRadius: 'var(--redondeo-medio)',
-                borderLeft: '4px solid #06b6d4'
-            }
-        }, [
-            crearElemento('div', {
-                estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)', marginBottom: '4px' },
-                texto: 'Promedio por Cambio'
-            }),
-            crearElemento('div', {
-                estilo: { fontSize: 'var(--tamano-muy-grande)', fontWeight: '700', color: 'var(--texto-fuerte)' },
-                texto: `${datosCambios.length > 0 ? Math.round(totalMinutosCambios / datosCambios.length) : 0} min`
-            })
         ])
     ]);
+    
+    // Crear contenedor del gráfico con valores en las barras
+    const contenedorGrafico = crearElemento('div', { 
+        estilo: { 
+            position: 'relative',
+            marginBottom: '16px'
+        } 
+    }, [graficoCambios]);
     
     return crearPanel({
         titulo: '🔄 Análisis Especial: Cambio de Producto / Modelo',
@@ -24141,9 +24174,9 @@ function crearPanelCambioProductoTiemposMuertos(datosFiltrados, estado) {
                     color: 'var(--texto-suave)',
                     marginBottom: '12px'
                 },
-                texto: 'Este gráfico muestra solo los días donde hubo cambios de modelo/diseño/producto'
+                texto: 'Este gráfico muestra solo los días donde hubo cambios de modelo/diseño/producto. Pasa el mouse sobre las barras para ver el valor exacto.'
             }),
-            graficoCambios
+            contenedorGrafico
         ]
     });
 }
