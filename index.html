@@ -23774,15 +23774,12 @@ function crearPanelKPIsTiemposMuertos(datos, estado) {
 }
 
 /**
- * Crea panel de Rankings TOP 5
+ * Crea panel de Rankings TOP 5 con gráficos de barras
  */
 function crearPanelRankingsTiemposMuertos(datos, estado) {
-    const metricas = calcularMetricasTiemposMuertos(datos);
-    const top5 = generarTop5Motivos(metricas);
-    
-    if (top5.length === 0) {
+    if (!datos || datos.length === 0) {
         return crearPanel({
-            titulo: 'TOP 5 Motivos de Parada',
+            titulo: 'TOP 5 Rankings',
             icono: 'trofeo',
             cuerpo: [crearEstadoVacio({
                 titulo: 'Sin datos suficientes',
@@ -23792,102 +23789,97 @@ function crearPanelRankingsTiemposMuertos(datos, estado) {
         });
     }
     
-    const itemsRanking = top5.map((item, idx) => {
-        const obsTexto = item.observaciones.length > 0
-            ? item.observaciones.slice(0, 3).join(' • ')
-            : 'Sin observaciones registradas';
+    // TOP 5 MÁQUINAS (Prensas, Línea Esmalte, etc.)
+    const maquinas = {};
+    datos.forEach(d => {
+        const maq = d['Máquina'] || d.Maquina || d.maquina || 'Sin máquina';
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
         
-        return crearElemento('div', {
-            estilo: {
-                marginBottom: '20px',
-                padding: '16px',
-                background: 'var(--fondo-hundido)',
-                borderRadius: 'var(--redondeo-medio)',
-                borderLeft: `3px solid ${idx === 0 ? '#d97706' : idx === 1 ? '#94a3b8' : '#cd7f32'}`
-            }
-        }, [
-            crearElemento('div', {
-                estilo: { display: 'flex', alignItems: 'center', marginBottom: '8px' }
-            }, [
-                crearElemento('span', {
-                    estilo: {
-                        fontSize: 'var(--tamano-grande)',
-                        fontWeight: '700',
-                        color: 'var(--texto-tenue)',
-                        marginRight: '12px',
-                        minWidth: '30px'
-                    },
-                    texto: `#${idx + 1}`
-                }),
-                crearElemento('span', {
-                    estilo: {
-                        fontSize: 'var(--tamano-comodo)',
-                        fontWeight: '600',
-                        color: 'var(--texto-fuerte)',
-                        flex: '1'
-                    },
-                    texto: item.motivo
-                })
-            ]),
-            crearElemento('div', {
-                estilo: {
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: '12px',
-                    marginBottom: '8px',
-                    paddingLeft: '42px'
-                }
-            }, [
-                crearElemento('div', {}, [
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)' },
-                        texto: 'Tiempo Total'
-                    }),
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-titulo)', fontWeight: '600', color: 'var(--texto-fuerte)' },
-                        texto: `${formatearNumero(Math.round(item.minutos))} min`
-                    })
-                ]),
-                crearElemento('div', {}, [
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)' },
-                        texto: 'Eventos'
-                    }),
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-titulo)', fontWeight: '600', color: 'var(--texto-fuerte)' },
-                        texto: formatearNumero(item.eventos)
-                    })
-                ]),
-                crearElemento('div', {}, [
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-pequeno)', color: 'var(--texto-suave)' },
-                        texto: 'Participación'
-                    }),
-                    crearElemento('div', {
-                        estilo: { fontSize: 'var(--tamano-titulo)', fontWeight: '600', color: 'var(--acento)' },
-                        texto: `${item.porcentaje.toFixed(1)}%`
-                    })
-                ])
-            ]),
-            crearElemento('div', {
-                estilo: {
-                    fontSize: 'var(--tamano-pequeno)',
-                    color: 'var(--texto-suave)',
-                    paddingLeft: '42px',
-                    fontStyle: 'italic',
-                    lineHeight: '1.5'
-                },
-                texto: `💬 ${obsTexto}`
-            })
-        ]);
+        if (!maquinas[maq]) {
+            maquinas[maq] = { minutos: 0, eventos: 0 };
+        }
+        maquinas[maq].minutos += duracion;
+        maquinas[maq].eventos += 1;
     });
     
-    return crearPanel({
-        titulo: 'TOP 5 Motivos por Tiempo de Parada',
-        subtitulo: `Análisis de los ${top5.length} motivos principales`,
-        icono: 'trofeo',
-        cuerpo: itemsRanking
+    const top5Maquinas = Object.entries(maquinas)
+        .map(([maq, data]) => ({ 
+            clave: maq, 
+            valor: data.minutos,
+            eventos: data.eventos
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
+    
+    // TOP 5 MOTIVOS (vacíos, quemado, fallas, etc.)
+    const motivos = {};
+    datos.forEach(d => {
+        const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!motivos[motivo]) {
+            motivos[motivo] = { minutos: 0, eventos: 0 };
+        }
+        motivos[motivo].minutos += duracion;
+        motivos[motivo].eventos += 1;
     });
+    
+    const top5Motivos = Object.entries(motivos)
+        .map(([mot, data]) => ({ 
+            clave: mot, 
+            valor: data.minutos,
+            eventos: data.eventos
+        }))
+        .sort((a, b) => b.valor - a.valor)
+        .slice(0, 5);
+    
+    // Crear gráfico de barras horizontales para Máquinas
+    const graficoMaquinas = dibujarBarrasHorizontales(top5Maquinas, {
+        alto: 280,
+        mostrarValores: true,
+        formatearValor: (val) => `${Math.round(val)} min`,
+        formatearEtiqueta: (item) => `${item.clave.substring(0, 25)}${item.clave.length > 25 ? '...' : ''}`,
+        colorBase: '#3b82f6'
+    });
+    
+    // Crear gráfico de barras horizontales para Motivos
+    const graficoMotivos = dibujarBarrasHorizontales(top5Motivos, {
+        alto: 280,
+        mostrarValores: true,
+        formatearValor: (val) => `${Math.round(val)} min`,
+        formatearEtiqueta: (item) => {
+            const texto = item.clave;
+            // Extraer código si existe (P307 - DESCRIPCION)
+            const match = texto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+            if (match) {
+                const [, codigo, desc] = match;
+                return `${codigo}: ${desc.substring(0, 35)}${desc.length > 35 ? '...' : ''}`;
+            }
+            return `${texto.substring(0, 40)}${texto.length > 40 ? '...' : ''}`;
+        },
+        colorBase: '#f59e0b'
+    });
+    
+    const totalMinutosMaq = top5Maquinas.reduce((sum, m) => sum + m.valor, 0);
+    const totalMinutosMot = top5Motivos.reduce((sum, m) => sum + m.valor, 0);
+    
+    return crearElemento('div', { clase: 'layout-rejilla-2' }, [
+        // Panel TOP 5 Máquinas
+        crearPanel({
+            titulo: 'TOP 5 Máquinas con Más Paradas',
+            subtitulo: `${top5Maquinas.length} máquinas • ${Math.round(totalMinutosMaq)} min acumulados`,
+            icono: 'fabrica',
+            cuerpo: [graficoMaquinas]
+        }),
+        
+        // Panel TOP 5 Motivos
+        crearPanel({
+            titulo: 'TOP 5 Motivos de Parada',
+            subtitulo: `${top5Motivos.length} motivos • ${Math.round(totalMinutosMot)} min acumulados`,
+            icono: 'alerta',
+            cuerpo: [graficoMotivos]
+        })
+    ]);
 }
 
 /**
@@ -23919,10 +23911,202 @@ function dibujarVistaTiemposMuertos(contenedor, {
     // Rankings TOP 5
     partes.push(crearPanelRankingsTiemposMuertos(datosFiltrados, estado));
     
+    // Gráfico temporal de evolución
+    partes.push(crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado));
+    
+    // Filtros jerárquicos
+    partes.push(crearPanelFiltrosJerarquicosTiemposMuertos(datosFiltrados, estado));
+    
     reemplazarContenido(contenedor, partes);
 }
 
 /* ============ js/vistas/vistaTiemposMuertos.js ============ */
+
+/**
+ * Panel de Filtros Jerárquicos - Tiempos Muertos
+ * Máquina → Motivo → Observaciones
+ * @param {Array} datosFiltrados - Datos filtrados
+ * @param {object} estado - Estado de la aplicación
+ * @returns {HTMLElement} Panel
+ */
+function crearPanelFiltrosJerarquicosTiemposMuertos(datosFiltrados, estado) {
+    if (!datosFiltrados || datosFiltrados.length === 0) {
+        return crearPanel({
+            titulo: 'Explorador Jerárquico',
+            icono: 'filtro',
+            cuerpo: [crearEstadoVacio({
+                titulo: 'Sin datos',
+                ayuda: 'No hay registros para explorar',
+                icono: 'info'
+            })]
+        });
+    }
+    
+    // Agrupar por Máquina
+    const porMaquina = {};
+    datosFiltrados.forEach(d => {
+        const maq = d['Máquina'] || d.Maquina || d.maquina || 'Sin máquina';
+        const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
+        const obs = d['Observaciones'] || d.Observaciones || d.observaciones || '';
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!porMaquina[maq]) {
+            porMaquina[maq] = { minutos: 0, motivos: {} };
+        }
+        porMaquina[maq].minutos += duracion;
+        
+        if (!porMaquina[maq].motivos[motivo]) {
+            porMaquina[maq].motivos[motivo] = { minutos: 0, observaciones: [] };
+        }
+        porMaquina[maq].motivos[motivo].minutos += duracion;
+        
+        if (obs.trim()) {
+            porMaquina[maq].motivos[motivo].observaciones.push({
+                texto: obs,
+                minutos: duracion
+            });
+        }
+    });
+    
+    // Crear acordeones jerárquicos
+    const acordeones = Object.entries(porMaquina)
+        .sort((a, b) => b[1].minutos - a[1].minutos)
+        .slice(0, 10) // Top 10 máquinas
+        .map(([maquina, dataMaq]) => {
+            const motivosOrdenados = Object.entries(dataMaq.motivos)
+                .sort((a, b) => b[1].minutos - a[1].minutos);
+            
+            const contenidoMotivos = motivosOrdenados.map(([motivo, dataMot]) => {
+                // Extraer código del motivo
+                const match = motivo.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+                const motivoTexto = match ? `${match[1]}: ${match[2]}` : motivo;
+                
+                const obsUnicas = dataMot.observaciones
+                    .filter((o, idx, self) => 
+                        idx === self.findIndex(t => t.texto === o.texto)
+                    )
+                    .slice(0, 5); // Máximo 5 observaciones únicas
+                
+                const listaObs = obsUnicas.length > 0
+                    ? crearElemento('ul', { 
+                        estilo: { 
+                            marginTop: '8px', 
+                            paddingLeft: '20px',
+                            fontSize: 'var(--tamano-pequeno)',
+                            color: 'var(--texto-suave)',
+                            lineHeight: '1.6'
+                        } 
+                    }, obsUnicas.map(obs => 
+                        crearElemento('li', { 
+                            estilo: { marginBottom: '4px' },
+                            texto: `${obs.texto} (${obs.minutos} min)`
+                        })
+                    ))
+                    : crearElemento('p', { 
+                        estilo: { 
+                            marginTop: '8px',
+                            fontSize: 'var(--tamano-pequeno)',
+                            color: 'var(--texto-tenue)',
+                            fontStyle: 'italic'
+                        },
+                        texto: 'Sin observaciones registradas'
+                    });
+                
+                return crearElemento('details', { 
+                    estilo: { 
+                        marginBottom: '12px',
+                        padding: '12px',
+                        background: 'var(--fondo-elevado)',
+                        borderRadius: 'var(--redondeo-pequeno)',
+                        borderLeft: '3px solid var(--acento)'
+                    }
+                }, [
+                    crearElemento('summary', { 
+                        estilo: { 
+                            cursor: 'pointer',
+                            fontWeight: '500',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }
+                    }, [
+                        crearElemento('span', { 
+                            estilo: { flex: '1', marginRight: '12px' },
+                            texto: motivoTexto.length > 50 ? motivoTexto.substring(0, 50) + '...' : motivoTexto
+                        }),
+                        crearElemento('span', { 
+                            estilo: { 
+                                fontSize: 'var(--tamano-pequeno)',
+                                color: 'var(--acento)',
+                                fontWeight: '600'
+                            },
+                            texto: `${Math.round(dataMot.minutos)} min`
+                        })
+                    ]),
+                    crearElemento('div', { 
+                        estilo: { 
+                            marginTop: '12px',
+                            paddingTop: '12px',
+                            borderTop: '1px solid var(--borde-suave)'
+                        }
+                    }, [
+                        crearElemento('h5', { 
+                            estilo: { 
+                                fontSize: 'var(--tamano-pequeno)',
+                                fontWeight: '600',
+                                marginBottom: '8px',
+                                color: 'var(--texto-fuerte)'
+                            },
+                            texto: '📝 Observaciones:'
+                        }),
+                        listaObs
+                    ])
+                ]);
+            });
+            
+            return crearElemento('details', { 
+                estilo: { 
+                    marginBottom: '16px',
+                    border: '1px solid var(--borde-suave)',
+                    borderRadius: 'var(--redondeo-medio)',
+                    overflow: 'hidden'
+                }
+            }, [
+                crearElemento('summary', { 
+                    estilo: { 
+                        padding: '16px',
+                        cursor: 'pointer',
+                        background: 'var(--fondo-hundido)',
+                        fontWeight: '600',
+                        fontSize: 'var(--tamano-comodo)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }
+                }, [
+                    crearElemento('span', { texto: `⚙️ ${maquina}` }),
+                    crearElemento('span', { 
+                        estilo: { 
+                            fontSize: 'var(--tamano-pequeno)',
+                            color: 'var(--acento)',
+                            fontWeight: '600'
+                        },
+                        texto: `${Math.round(dataMaq.minutos)} min • ${motivosOrdenados.length} motivos`
+                    })
+                ]),
+                crearElemento('div', { 
+                    estilo: { padding: '16px' }
+                }, contenidoMotivos)
+            ]);
+        });
+    
+    return crearPanel({
+        titulo: 'Explorador Jerárquico: Máquina → Motivo → Observaciones',
+        subtitulo: 'Navegación detallada de paradas por equipo',
+        icono: 'lista',
+        cuerpo: acordeones
+    });
+}
 
 /**
  * Panel de Serie Temporal (Gráfico de Líneas) - Tiempos Muertos
@@ -23940,22 +24124,49 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
         ]);
     }
     
-    // Construir la serie temporal con granularidad DIARIA
-    const serie = construirSerieTemporal(datosFiltrados, estado.columnaFecha, 'conteo', {
-        granularidad: 'dia',
-        operacion: 'suma'
+    // Construir la serie temporal con granularidad DIARIA usando DURACIÓN
+    // Agrupar manualmente por fecha y sumar duraciones
+    const porFecha = {};
+    datosFiltrados.forEach(d => {
+        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
+        if (!fechaStr) return;
+        
+        // Extraer día
+        let dia;
+        if (typeof fechaStr === 'string') {
+            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (match) {
+                dia = parseInt(match[3], 10); // Día del mes
+            }
+        } else if (fechaStr instanceof Date) {
+            dia = fechaStr.getDate();
+        }
+        
+        if (!dia) return;
+        
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!porFecha[dia]) {
+            porFecha[dia] = 0;
+        }
+        porFecha[dia] += duracion;
     });
     
-    if (!serie || serie.puntos.length < 2) {
+    // Convertir a array de puntos
+    const puntos = Object.entries(porFecha)
+        .map(([dia, minutos]) => ({
+            fecha: parseInt(dia, 10),
+            valor: minutos
+        }))
+        .sort((a, b) => a.fecha - b.fecha);
+    
+    if (puntos.length < 2) {
         return crearElemento('div', { clase: 'tarjeta-panel vacio' }, [
             crearElemento('div', { clase: 'icono-boton' }, crearIcono('grafico')),
             crearElemento('h3', {}, 'Sin datos suficientes'),
             crearElemento('p', { estilo: { color: 'var(--texto-suave)' } }, 'Se necesitan al menos 2 días de datos para el gráfico de evolución.')
         ]);
     }
-    
-    // Encontrar los picos (días con más minutos) - top 5
-    const puntos = serie.puntos;
     const topDias = [...puntos].sort((a, b) => b.valor - a.valor).slice(0, 5);
     
     const diasConPicos = topDias.map((pico, index) => ({
@@ -23981,25 +24192,54 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
     });
 
     // Calcular estadísticas
-    const diasUnicos = new Set(puntos.map(p => typeof p.fecha === 'number' ? p.fecha : (p.fecha?.getDate() ?? p.fecha))).size;
+    const diasUnicos = new Set(puntos.map(p => p.fecha)).size;
     const totalMinutos = puntos.reduce((sum, p) => sum + (p.valor || 0), 0);
     const promedio = puntos.length > 0 ? (totalMinutos / puntos.length).toFixed(0) : '0';
     
-    // Descubrir el motivo más común en los datos
-    const motivoPrincipal = datosFiltrados.slice(0, 50).reduce((acc, d) => {
-        const motivo = d.motivo || d['Motivo Parada'] || 'Sin motivo';
-        acc[motivo] = (acc[motivo] || 0) + (d.minutos || 0);
-        return acc;
-    }, {});
+    // Encontrar los picos (días con más minutos) - top 5
+    const topDias = [...puntos].sort((a, b) => b.valor - a.valor).slice(0, 5);
     
-    const mejorMotivo = Object.entries(motivoPrincipal).sort((a, b) => b[1] - a[1])[0];
+    // Calcular motivo principal por día para los top 5
+    const motivosPorDia = {};
+    datosFiltrados.forEach(d => {
+        const fechaStr = d['Fecha SAP'] || d['Fecha Inicio'] || d.fecha || d.Fecha;
+        if (!fechaStr) return;
+        
+        let dia;
+        if (typeof fechaStr === 'string') {
+            const match = fechaStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (match) dia = parseInt(match[3], 10);
+        } else if (fechaStr instanceof Date) {
+            dia = fechaStr.getDate();
+        }
+        
+        if (!dia) return;
+        
+        const motivo = d['Motivo'] || d.Motivo || d.motivo || 'Sin motivo';
+        const duracion = parseFloat(d['Duración'] || d.Duracion || d.duracion || 0);
+        
+        if (!motivosPorDia[dia]) {
+            motivosPorDia[dia] = {};
+        }
+        
+        if (!motivosPorDia[dia][motivo]) {
+            motivosPorDia[dia][motivo] = 0;
+        }
+        motivosPorDia[dia][motivo] += duracion;
+    });
+    
+    const diasConPicos = topDias.map((pico, index) => ({
+        indice: index,
+        titulo: `Día ${pico.fecha}`,
+        detalle: `${Math.round(pico.valor)} min`
+    }));
     
     return crearElemento('div', { clase: 'tarjeta-panel' }, [
         crearElemento('div', { clase: 'cabecera-panel' }, [
             crearElemento('div', { clase: 'cabecera-panel-icono' }, crearIcono('historial')),
             crearElemento('div', { clase: 'cabecera-panel-contenido' }, [
                 crearElemento('h3', {}, 'Evolución por Día del Mes'),
-                crearElemento('p', { clase: 'subtitulo' }, `${diasUnicos} días con datos • ${totalMinutos} min totales • Promedio ${promedio} min/día`)
+                crearElemento('p', { clase: 'subtitulo' }, `${diasUnicos} días con datos • ${Math.round(totalMinutos)} min totales • Promedio ${promedio} min/día`)
             ])
         ]),
         crearElemento('div', { clase: 'cuerpo-panel' }, [
@@ -24011,12 +24251,12 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                 crearElemento('span', { clase: 'meta-valor', texto: diasUnicos })
             ]),
             crearElemento('div', { clase: 'meta-item' }, [
-                crearElemento('span', { className: 'meta-label' }, 'Total de min. parada'),
-                crearElemento('span', { className: 'meta-valor', texto: `${totalMinutos} min` })
+                crearElemento('span', { clase: 'meta-label' }, 'Total de min. parada'),
+                crearElemento('span', { clase: 'meta-valor', texto: `${Math.round(totalMinutos)} min` })
             ]),
-            crearElemento('div', { className: 'meta-item' }, [
-                crearElemento('span', { className: 'meta-label' }, 'Promedio'),
-                crearElemento('span', { className: 'meta-valor', texto: `${promedio} min/día` })
+            crearElemento('div', { clase: 'meta-item' }, [
+                crearElemento('span', { clase: 'meta-label' }, 'Promedio'),
+                crearElemento('span', { clase: 'meta-valor', texto: `${promedio} min/día` })
             ])
         ]),
         // Top 5 días con más parada
@@ -24031,11 +24271,29 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                     ])
                 ]),
                 crearElemento('tbody', {}, topDias.map((pico, idx) => {
-                    const dia = typeof pico.fecha === 'number' ? pico.fecha : (pico.fecha?.getDate() ?? pico.fecha);
+                    const dia = pico.fecha;
+                    
+                    // Obtener el motivo principal de ese día específico
+                    let motivoPrincipalDia = '—';
+                    if (motivosPorDia[dia]) {
+                        const motivosDelDia = Object.entries(motivosPorDia[dia])
+                            .sort((a, b) => b[1] - a[1]);
+                        if (motivosDelDia.length > 0) {
+                            const motivoCompleto = motivosDelDia[0][0];
+                            // Extraer código y descripción
+                            const match = motivoCompleto.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
+                            if (match) {
+                                motivoPrincipalDia = `${match[1]}: ${match[2].substring(0, 30)}${match[2].length > 30 ? '...' : ''}`;
+                            } else {
+                                motivoPrincipalDia = motivoCompleto.substring(0, 35) + (motivoCompleto.length > 35 ? '...' : '');
+                            }
+                        }
+                    }
+                    
                     return crearElemento('tr', { estilo: idx < 3 ? { background: 'var(--fondo-elevado)' } : {} }, [
                         crearElemento('td', { clase: 'celda-lista' }, `Día ${dia}`),
-                        crearElemento('td', { clase: 'celda-numero', texto: pico.valor }),
-                        crearElemento('td', { clase: 'celda-lista', estilo: { maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, mejorMotivo ? mejorMotivo[0] : '—')
+                        crearElemento('td', { clase: 'celda-numero', texto: Math.round(pico.valor) }),
+                        crearElemento('td', { clase: 'celda-lista', estilo: { maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, motivoPrincipalDia)
                     ]);
                 }))
             ])
