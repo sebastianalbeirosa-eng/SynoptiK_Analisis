@@ -24167,30 +24167,7 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
             crearElemento('p', { estilo: { color: 'var(--texto-suave)' } }, 'Se necesitan al menos 2 días de datos para el gráfico de evolución.')
         ]);
     }
-    const topDias = [...puntos].sort((a, b) => b.valor - a.valor).slice(0, 5);
     
-    const diasConPicos = topDias.map((pico, index) => ({
-        indice: index,
-        titulo: typeof pico.fecha === 'number' ? `Día ${pico.fecha}` : `${pico.fecha}`,
-        detalle: `${pico.valor} min`
-    }));
-    
-    // Gráfico de líneas con etiquetas en los picos
-    const datosLinea = puntos.map(punto => ({
-        clave: typeof punto.fecha === 'number' ? `Día ${punto.fecha}` : `${punto.fecha}`,
-        valor: punto.valor
-    }));
-    
-    const graficoLinea = dibujarLineaCLásico(datosLinea, {
-        alto: 260,
-        descripcion: 'Evolución de los minutos de parada por día del mes',
-        mostrarArea: true,
-        rotuloDestacado: diasConPicos.length > 0 ? diasConPicos[0] : null,
-        etiquetasDestacadas: diasConPicos.length > 0 ? diasConPicos : null,
-        formatearValor: (val) => `${val} min`,
-        serieDeColor: 1
-    });
-
     // Calcular estadísticas
     const diasUnicos = new Set(puntos.map(p => p.fecha)).size;
     const totalMinutos = puntos.reduce((sum, p) => sum + (p.valor || 0), 0);
@@ -24233,6 +24210,22 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
         titulo: `Día ${pico.fecha}`,
         detalle: `${Math.round(pico.valor)} min`
     }));
+    
+    // Gráfico de líneas con etiquetas en los picos
+    const datosLinea = puntos.map(punto => ({
+        clave: `Día ${punto.fecha}`,
+        valor: punto.valor
+    }));
+    
+    const graficoLinea = dibujarLineaCLásico(datosLinea, {
+        alto: 260,
+        descripcion: 'Evolución de los minutos de parada por día del mes',
+        mostrarArea: true,
+        rotuloDestacado: diasConPicos.length > 0 ? diasConPicos[0] : null,
+        etiquetasDestacadas: diasConPicos.length > 0 ? diasConPicos : null,
+        formatearValor: (val) => `${Math.round(val)} min`,
+        serieDeColor: 1
+    });
     
     return crearElemento('div', { clase: 'tarjeta-panel' }, [
         crearElemento('div', { clase: 'cabecera-panel' }, [
