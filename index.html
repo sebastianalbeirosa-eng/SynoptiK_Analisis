@@ -24812,8 +24812,8 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                     // Crear acordeón para el desglose
                     const acordeon = crearElemento('details', {
                         estilo: {
-                            marginTop: '4px',
-                            padding: '8px',
+                            marginTop: '2px',
+                            padding: '6px',
                             background: 'var(--fondo-hundido)',
                             borderRadius: 'var(--redondeo-pequeno)',
                             border: '1px solid var(--borde-suave)'
@@ -24822,20 +24822,20 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                         crearElemento('summary', {
                             estilo: {
                                 cursor: 'pointer',
-                                fontWeight: '600',
+                                fontWeight: '500',
                                 fontSize: 'var(--tamano-pequeno)',
                                 color: 'var(--acento)',
                                 padding: '4px'
                             }
                         }, [
-                            crearElemento('span', { texto: `👁️ Ver ${motivosDelDia.length} motivo${motivosDelDia.length > 1 ? 's' : ''} del día` })
+                            crearElemento('span', { texto: `${motivosDelDia.length} motivo${motivosDelDia.length > 1 ? 's' : ''} ▼` })
                         ]),
                         crearElemento('div', {
                             estilo: {
-                                marginTop: '8px',
-                                paddingLeft: '8px',
+                                marginTop: '6px',
+                                paddingLeft: '4px',
                                 fontSize: 'var(--tamano-pequeno)',
-                                lineHeight: '1.8'
+                                lineHeight: '1.6'
                             }
                         }, motivosDelDia.map(([motivo, mins]) => {
                             const match = motivo.match(/^([A-Z]\d+)\s*-\s*(.+)$/);
@@ -24845,20 +24845,21 @@ function crearPanelSerieTemporalTiemposMuertos(datosFiltrados, estado) {
                                 estilo: {
                                     display: 'flex',
                                     justifyContent: 'space-between',
-                                    padding: '4px 0',
+                                    padding: '3px 0',
                                     borderBottom: '1px solid var(--borde-suave)'
                                 }
                             }, [
                                 crearElemento('span', {
-                                    estilo: { flex: '1', paddingRight: '12px' },
+                                    estilo: { flex: '1', paddingRight: '8px', fontSize: 'var(--tamano-muy-pequeno)' },
                                     texto: textoMotivo
                                 }),
                                 crearElemento('span', {
                                     estilo: {
                                         fontWeight: '600',
                                         color: 'var(--acento)',
-                                        minWidth: '70px',
-                                        textAlign: 'right'
+                                        minWidth: '60px',
+                                        textAlign: 'right',
+                                        fontSize: 'var(--tamano-pequeno)'
                                     },
                                     texto: `${Math.round(mins)} min`
                                 })
